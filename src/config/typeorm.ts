@@ -4,7 +4,6 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import 'dotenv/config';
 import { User } from '@modules/user/entities/user.entity';
-import { Addiction } from '@modules/user/entities/addiction.entity';
 import { DailyMotivation } from '@modules/user/entities/daily-motivation.entity';
 import { Comment } from '@modules/forum/entities/comment.entity';
 import { Like } from '@modules/forum/entities/like.entity';
@@ -28,7 +27,6 @@ const dataSourceOptions: TypeOrmModuleOptions = {
   entities: [
     User,
     Friendship,
-    Addiction,
     DailyMotivation,
     Comment,
     Like,
