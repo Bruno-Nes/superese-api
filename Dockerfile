@@ -1,10 +1,8 @@
-# Set nginx base image
-FROM node:18
-LABEL maintainer="Hantsy Bai"
+FROM node:22-alpine
 WORKDIR  /app
-COPY  ./dist ./dist
-COPY package.json .
-COPY package-lock.json .
+COPY package.json package-lock.json ./
 RUN  npm ci --only=production --ignore-scripts
+COPY . .
+RUN npm run build
 EXPOSE 3000
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]
