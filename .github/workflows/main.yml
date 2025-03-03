@@ -27,6 +27,31 @@ jobs:
             SHA=$(echo $GITHUB_SHA | head -c7)
             echo "sha=$SHA" >> $GITHUB_OUTPUT
 
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with: 
+            role-to-assume: ''
+            aws-region: us-east-2
+
+        - name: Login to AWS ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v2
+
+
+
+        - name: Login in to container registry
+          uses: docker://ghcr.io/kciter/aws-ecr-action:latest
+          with:
+                access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+                repo: superse-api/repo
+                region: us-east-2
+                tags: ${{ steps.generate_tag.outputs.sha }}
+                create_repo: true
+                image_scanning_configuration: true
+                set_repo_policy: true
+                repo_policy_file: repo-policy.json
 
         - name: Build Docker image
           run: docker build -t superese-api:${{ steps.generate_tag.outputs.sha }} . 
