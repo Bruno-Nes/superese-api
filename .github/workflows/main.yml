@@ -13,3 +13,20 @@ jobs:
 
         steps:
         - uses: actions/checkout@v4
+
+        - name: Setup Node
+          uses: actions/setup-node@v4
+          with:
+            node-version: 22
+            cache: npm 
+        - run: npm ci
+
+        - name: Generate tag
+          id: generate_tag 
+          run: |
+            SHA=${echo $GITHUB_SHA | head -c7}
+            echo "sha=$SHA" >> $GITHUB_OUTPUT
+
+
+        - name: Build Docker image
+          run: docker build -t superese-api:${{ steps.generate_tag.outputs.sha }} . 
