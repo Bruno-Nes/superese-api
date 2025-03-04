@@ -34,6 +34,10 @@ export class UserService {
     return await this.userRepository.findOne({ where: { email } });
   }
 
+  async findByIdOrThrow(userId: string) {
+    return await this.userRepository.findOneOrFail({ where: { id: userId } });
+  }
+
   async findAll(): Promise<User[]> {
     return await this.userRepository.find();
   }
