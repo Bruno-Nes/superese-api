@@ -12,28 +12,27 @@ import {
 import { CommentPostDTO } from '../dtos/create-comment.dto';
 import { CreatePostDTO } from '../dtos/create-post.dto';
 import { ForumService } from '../services/forum.service';
-import { Public } from 'src/lib/decorators/public-route.decorators';
 import { PaginationQueryDto } from 'src/lib/dtos/pagination-query.dto';
+import { User } from 'src/lib/decorators/user.decorator';
+import { User as UserEntity } from '@modules/user/entities/user.entity';
 
 @Controller('posts')
 export class ForumController {
   constructor(private readonly forumService: ForumService) {}
 
   @Post()
-  @Public()
-  async createPost(@Body() createPostDto: CreatePostDTO, @Req() request: any) {
-    const user = {
-      id: '718202d7-3eb0-4404-9456-65220ee69443',
-      email: 'brunonestor2010@gmail.com',
-      firstName: 'Bruno',
-      lastName: 'Nestor',
-    };
+  async createPost(
+    @Body() createPostDto: CreatePostDTO,
+    @User() user: Partial<UserEntity>,
+  ) {
     return this.forumService.create(createPostDto, user);
   }
 
   @Post(':id/like')
-  async likePost(@Param('id') postId: string, @Req() request: any) {
-    const user = request.user;
+  async likePost(
+    @Param('id') postId: string,
+    @User() user: Partial<UserEntity>,
+  ) {
     this.forumService.like(postId, user);
     return true;
   }
@@ -50,8 +49,11 @@ export class ForumController {
   }
 
   @Get()
-  async getPosts(@Query() paginationQuery: PaginationQueryDto) {
-    const userId = '718202d7-3eb0-4404-9456-65220ee69443';
+  async getPosts(
+    @Query() paginationQuery: PaginationQueryDto,
+    @User() user: Partial<UserEntity>,
+  ) {
+    const userId = user.id;
     console.log(paginationQuery);
     return this.forumService.findAllPosts(paginationQuery, userId);
   }

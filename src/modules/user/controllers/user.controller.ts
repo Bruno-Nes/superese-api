@@ -11,7 +11,6 @@ import {
 import { UserService } from '../services/user.service';
 import { CreateUserDTO } from '../dtos/create-user.dto';
 import { RegisteredUser } from '../dtos/registered-user-response.dto';
-import { Public } from 'src/lib/decorators/public-route.decorators';
 
 @Controller('users')
 export class UserController {
@@ -26,7 +25,6 @@ export class UserController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @Public()
   async getUsers() {
     return await this.userService.findAll();
   }

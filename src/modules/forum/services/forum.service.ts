@@ -77,9 +77,7 @@ export class ForumService {
   }
 
   async like(postId: string, user: any) {
-    const post = await this.postRepository.findOne({
-      where: { id: postId },
-    });
+    const post: DeepPartial<Post> = await this.findPostById(postId);
     if (!post) {
       throw new Error('Post not found');
     }
