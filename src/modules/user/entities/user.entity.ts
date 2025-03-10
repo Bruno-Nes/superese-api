@@ -39,6 +39,9 @@ export class User {
   @Column()
   birthdayDate: Date;
 
+  @Column({ length: 20, unique: true })
+  username: string;
+
   @Column({ length: 10, nullable: true })
   role?: string;
 

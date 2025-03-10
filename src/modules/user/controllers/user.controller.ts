@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDTO } from '../dtos/create-user.dto';
-import { User } from '../entities/user.entity';
+import { RegisteredUser } from '../dtos/registered-user-response.dto';
 
 @Controller('users')
 export class UserController {
@@ -19,7 +19,7 @@ export class UserController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(ClassSerializerInterceptor)
-  async createUser(@Body() data: CreateUserDTO): Promise<User> {
+  async createUser(@Body() data: CreateUserDTO): Promise<RegisteredUser> {
     return await this.userService.createUser(data);
   }
 

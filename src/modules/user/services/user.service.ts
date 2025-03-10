@@ -3,15 +3,18 @@ import { User } from '../entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDTO } from '../dtos/create-user.dto';
+import { JwtService } from '@nestjs/jwt';
+import { RegisteredUser } from '../dtos/registered-user-response.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async createUser(input: CreateUserDTO): Promise<User> {
+  async createUser(input: CreateUserDTO): Promise<RegisteredUser> {
     const existingUser = await this.findUserByEmail(input.email);
     if (existingUser) throw new Error('User already exists');
 
@@ -20,11 +23,19 @@ export class UserService {
     }
 
     const user = this.userRepository.create(input);
-    return (await this.userRepository.insert(user)).raw;
+    const savedUser = await this.userRepository.save(user);
+    const payload = { username: savedUser.email, sub: user.id };
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+    };
   }
 
   async findUserByEmail(email: string): Promise<User> {
     return await this.userRepository.findOne({ where: { email } });
+  }
+
+  async findByIdOrThrow(userId: string) {
+    return await this.userRepository.findOneOrFail({ where: { id: userId } });
   }
 
   async findAll(): Promise<User[]> {

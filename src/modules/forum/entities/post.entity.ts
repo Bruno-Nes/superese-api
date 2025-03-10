@@ -20,10 +20,16 @@ export class Post {
   user: User;
 
   @Column({ type: 'text' })
+  title: string;
+
+  @Column({ type: 'text' })
   content: string;
 
   @OneToMany(() => Like, (like) => like.post)
   likes: Like[];
+
+  @Column({ default: 0 })
+  commentsCount: number;
 
   @OneToMany(() => Comment, (comment) => comment.post)
   comments: Comment[];
