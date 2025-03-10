@@ -1,8 +1,9 @@
-FROM node:22-alpine
-WORKDIR  /app
-COPY package.json package-lock.json ./
-RUN  npm ci --only=production --ignore-scripts
+FROM node:20.12.2-alpine
+WORKDIR /app
+COPY package*.json ./
+COPY tsconfig.json ./
 COPY . .
+RUN npm install
 RUN npm run build
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+CMD ["npm", "run", "start:prod"]
