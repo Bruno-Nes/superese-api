@@ -1,11 +1,13 @@
-import { IsOptional, IsString, IsUrl } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateEntryDto {
+  @ApiProperty({
+    description: 'Texto da entrada',
+    example: 'Atualizei meu diário hoje',
+    required: false,
+  })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'O texto deve ser uma string' })
   text?: string;
-
-  @IsOptional()
-  @IsUrl({}, { each: true })
-  links?: string[];
 }
