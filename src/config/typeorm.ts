@@ -3,8 +3,6 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 import { DataSource, DataSourceOptions } from 'typeorm';
 import 'dotenv/config';
-import { User } from '@modules/user/entities/user.entity';
-import { DailyMotivation } from '@modules/user/entities/daily-motivation.entity';
 import { Comment } from '@modules/forum/entities/comment.entity';
 import { Like } from '@modules/forum/entities/like.entity';
 import { Post } from '@modules/forum/entities/post.entity';
@@ -16,14 +14,14 @@ import { Goal } from '@modules/planner/entities/goal.entity';
 import { Medal } from '@modules/planner/entities/medal.entity';
 import { Plan } from '@modules/planner/entities/plan.entity';
 import { Friendship } from '@modules/user/entities/friendship.entity';
+import { Profile } from '@modules/user/entities/profile.entity';
 
 const dataSourceOptions: TypeOrmModuleOptions = {
   type: 'postgres',
   url: process.env.DATABASE_URL,
   entities: [
-    User,
+    Profile,
     Friendship,
-    DailyMotivation,
     Comment,
     Like,
     Post,
@@ -38,12 +36,12 @@ const dataSourceOptions: TypeOrmModuleOptions = {
   synchronize: false,
   migrations: ['dist/*-migrations.js'],
   logging: false,
-  extra: {
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  },
 };
+// extra: {
+//   ssl: {
+//     rejectUnauthorized: false,
+//   },
+// },
 
 export const AppDataSource = new DataSource(
   dataSourceOptions as DataSourceOptions,

@@ -6,7 +6,7 @@ import {
   Unique,
   CreateDateColumn,
 } from 'typeorm';
-import { User } from './user.entity';
+import { Profile } from './profile.entity';
 
 export enum FriendshipStatus {
   PENDING = 'PENDING',
@@ -20,15 +20,15 @@ export class Friendship {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, (user) => user.sentFriendRequests, {
+  @ManyToOne(() => Profile, (user) => user.sentFriendRequests, {
     onDelete: 'CASCADE',
   })
-  requester: User;
+  requester: Profile;
 
-  @ManyToOne(() => User, (user) => user.receivedFriendRequests, {
+  @ManyToOne(() => Profile, (user) => user.receivedFriendRequests, {
     onDelete: 'CASCADE',
   })
-  addressee: User;
+  addressee: Profile;
 
   @Column({
     type: 'enum',

@@ -22,22 +22,22 @@ export class ForumService {
   ) {}
 
   async create(post: CreatePostDTO, user: any) {
-    const userEntity = await this.userService.findByIdOrThrow(user.id);
+    const profile = await this.userService.findByIdOrThrow(user.id);
     const newPost = this.postRepository.create({
       ...post,
-      user: userEntity,
+      profile,
       likesCount: 0,
     });
     await this.postRepository.save(newPost);
     return newPost;
   }
 
-  async findAllPosts(paginationQuery: PaginationQueryDto, userId: string) {
+  async findAllPosts(paginationQuery: PaginationQueryDto, profileId: string) {
     const { limit, offset } = paginationQuery;
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
     const lastUserPost = await this.postRepository
       .createQueryBuilder('post')
-      .where('post.userId = :userId', { userId })
+      .where('post.profileId = :profileId', { profileId })
       .andWhere('post.createdAt > :thirtyMinutesAgo', { thirtyMinutesAgo })
       .orderBy('post.createdAt', 'DESC')
       .limit(1)
@@ -45,7 +45,7 @@ export class ForumService {
 
     const otherPosts = await this.postRepository
       .createQueryBuilder('post')
-      .where('post.userId != :userId', { userId })
+      .where('post.profileId != :profileId', { profileId })
       .orderBy('post.createdAt', 'DESC')
       .limit(limit)
       .offset(offset)
@@ -60,7 +60,7 @@ export class ForumService {
     });
   }
 
-  async comment(postId: string, comment: CommentPostDTO, user: any) {
+  async comment(postId: string, comment: CommentPostDTO, profile: any) {
     const post: DeepPartial<Post> = await this.findPostById(postId);
     if (!post) {
       throw new Error('Post not found');
@@ -68,7 +68,7 @@ export class ForumService {
     const newComment = this.commentRepository.create({
       ...comment,
       post,
-      user: { id: user.id },
+      profile: { id: profile.id },
     });
     post.commentsCount++;
     await this.postRepository.save(post);
@@ -76,13 +76,13 @@ export class ForumService {
     return newComment;
   }
 
-  async like(postId: string, user: any) {
+  async like(postId: string, profile: any) {
     const post: DeepPartial<Post> = await this.findPostById(postId);
     if (!post) {
       throw new Error('Post not found');
     }
     const like = await this.likeRepository.findOne({
-      where: { post: { id: postId }, user: { id: user.id } },
+      where: { post: { id: postId }, profile: { id: profile.id } },
     });
     if (like) {
       await this.likeRepository.remove(like);
@@ -100,14 +100,14 @@ export class ForumService {
   async getCommentsByPost(postId: string): Promise<Comment[]> {
     return await this.commentRepository.find({
       where: { post: { id: postId } },
-      relations: { user: true },
+      relations: { profile: true },
     });
   }
 
   async getLikesByPost(postId: string) {
     return await this.likeRepository.find({
       where: { post: { id: postId } },
-      relations: { user: true },
+      relations: { profile: true },
     });
   }
 }

@@ -1,4 +1,4 @@
-import { User } from 'src/modules/user/entities/user.entity';
+import { Profile } from '@modules/user/entities/profile.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('plans')
@@ -15,6 +15,6 @@ export class Plan {
   @Column({ type: 'timestamptz' })
   endDate: Date;
 
-  @ManyToOne(() => User, (user) => user.plans)
-  user: User;
+  @ManyToOne(() => Profile, (profile) => profile.plans)
+  profile: Profile;
 }

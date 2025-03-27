@@ -9,15 +9,15 @@ import {
 } from 'typeorm';
 import { Like } from './like.entity';
 import { Comment } from './comment.entity';
-import { User } from 'src/modules/user/entities/user.entity';
+import { Profile } from '@modules/user/entities/profile.entity';
 
 @Entity('posts')
 export class Post {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, (user) => user.posts, { onDelete: 'CASCADE' })
-  user: User;
+  @ManyToOne(() => Profile, (profile) => profile.posts, { onDelete: 'CASCADE' })
+  profile: Profile;
 
   @Column({ type: 'text' })
   title: string;

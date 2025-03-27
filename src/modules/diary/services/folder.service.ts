@@ -13,27 +13,27 @@ export class FolderService {
   ) {}
 
   async create(
-    userId: string,
+    profileId: string,
     createFolderDto: CreateFolderDto,
   ): Promise<Folder> {
     const folder = this.folderRepository.create({
       ...createFolderDto,
-      user: { id: userId },
+      profile: { id: profileId },
     });
     const result = await this.folderRepository.insert(folder);
     return result.raw;
   }
 
-  async findAll(userId: string): Promise<Folder[]> {
+  async findAll(profileId: string): Promise<Folder[]> {
     return this.folderRepository.find({
-      where: { user: { id: userId } },
+      where: { profile: { id: profileId } },
       relations: ['diaries'],
     });
   }
 
-  async findOne(id: string, userId: string): Promise<Folder> {
+  async findOne(id: string, profileId: string): Promise<Folder> {
     const folder = await this.folderRepository.findOne({
-      where: { id, user: { id: userId } },
+      where: { id, profile: { id: profileId } },
       relations: ['diaries'],
     });
     if (!folder) {
@@ -44,16 +44,16 @@ export class FolderService {
 
   async update(
     id: string,
-    userId: string,
+    profileId: string,
     updateFolderDto: UpdateFolderDto,
   ): Promise<Folder> {
-    const folder = await this.findOne(id, userId);
+    const folder = await this.findOne(id, profileId);
     Object.assign(folder, updateFolderDto);
     return this.folderRepository.save(folder);
   }
 
-  async remove(id: string, userId: string): Promise<void> {
-    const folder = await this.findOne(id, userId);
+  async remove(id: string, profileId: string): Promise<void> {
+    const folder = await this.findOne(id, profileId);
     await this.folderRepository.remove(folder);
   }
 }

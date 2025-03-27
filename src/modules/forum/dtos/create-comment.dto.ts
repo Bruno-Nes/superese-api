@@ -24,5 +24,5 @@ export class CommentPostDTO {
   })
   @IsNotEmpty()
   @IsString()
-  userId: string;
+  profileId: string;
 }

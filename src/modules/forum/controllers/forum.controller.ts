@@ -22,7 +22,7 @@ import { CreatePostDTO } from '../dtos/create-post.dto';
 import { ForumService } from '../services/forum.service';
 import { PaginationQueryDto } from 'src/lib/dtos/pagination-query.dto';
 import { User } from 'src/lib/decorators/user.decorator';
-import { User as UserEntity } from '@modules/user/entities/user.entity';
+import { Profile } from '@modules/user/entities/profile.entity';
 
 @ApiTags('Forum')
 @Controller('posts')
@@ -36,7 +36,7 @@ export class ForumController {
   @ApiBody({ type: CreatePostDTO })
   async createPost(
     @Body() createPostDto: CreatePostDTO,
-    @User() user: Partial<UserEntity>,
+    @User() user: Partial<Profile>,
   ) {
     return this.forumService.create(createPostDto, user);
   }
@@ -48,9 +48,9 @@ export class ForumController {
   @ApiParam({ name: 'id', description: 'ID do post', example: '1234' })
   async likePost(
     @Param('id') postId: string,
-    @User() user: Partial<UserEntity>,
+    @User() profile: Partial<Profile>,
   ) {
-    this.forumService.like(postId, user);
+    this.forumService.like(postId, profile);
     return true;
   }
 
@@ -88,11 +88,11 @@ export class ForumController {
   @ApiQuery({ name: 'page', description: 'Número da página', required: false })
   async getPosts(
     @Query() paginationQuery: PaginationQueryDto,
-    @User() user: Partial<UserEntity>,
+    @User() profile: Partial<Profile>,
   ) {
-    const userId = user.id;
+    const profileId = profile.id;
     console.log(paginationQuery);
-    return this.forumService.findAllPosts(paginationQuery, userId);
+    return this.forumService.findAllPosts(paginationQuery, profileId);
   }
 
   @Get(':id/comments')

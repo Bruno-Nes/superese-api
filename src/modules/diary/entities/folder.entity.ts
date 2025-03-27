@@ -8,7 +8,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { Diary } from './diary.entity';
-import { User } from '@modules/user/entities/user.entity';
+import { Profile } from '@modules/user/entities/profile.entity';
 
 @Entity('folders')
 export class Folder {
@@ -18,8 +18,10 @@ export class Folder {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @ManyToOne(() => User, (user) => user.folders, { onDelete: 'CASCADE' })
-  user: User;
+  @ManyToOne(() => Profile, (profile) => profile.folders, {
+    onDelete: 'CASCADE',
+  })
+  profile: Profile;
 
   @OneToMany(() => Diary, (diary) => diary.folder, { cascade: true })
   diaries: Diary[];
