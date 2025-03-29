@@ -7,7 +7,9 @@ import {
   Param,
   Post,
   Query,
+  Request,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,8 +23,7 @@ import { CommentPostDTO } from '../dtos/create-comment.dto';
 import { CreatePostDTO } from '../dtos/create-post.dto';
 import { ForumService } from '../services/forum.service';
 import { PaginationQueryDto } from 'src/lib/dtos/pagination-query.dto';
-import { User } from 'src/lib/decorators/user.decorator';
-import { Profile } from '@modules/user/entities/profile.entity';
+import { AuthGuard } from '@modules/auth/guards/auth.guard';
 
 @ApiTags('Forum')
 @Controller('posts')
@@ -33,12 +34,14 @@ export class ForumController {
   @ApiOperation({ summary: 'Cria um novo post' })
   @ApiResponse({ status: 201, description: 'Post criado com sucesso' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @UseGuards(AuthGuard)
   @ApiBody({ type: CreatePostDTO })
   async createPost(
     @Body() createPostDto: CreatePostDTO,
-    @User() user: Partial<Profile>,
+    @Request() request: any,
   ) {
-    return this.forumService.create(createPostDto, user);
+    const firebaseUserId = request.user.uid;
+    return this.forumService.create(createPostDto, firebaseUserId);
   }
 
   @Post(':id/like')
@@ -46,12 +49,9 @@ export class ForumController {
   @ApiResponse({ status: 200, description: 'Like registrado com sucesso' })
   @ApiResponse({ status: 404, description: 'Post não encontrado' })
   @ApiParam({ name: 'id', description: 'ID do post', example: '1234' })
-  async likePost(
-    @Param('id') postId: string,
-    @User() profile: Partial<Profile>,
-  ) {
-    this.forumService.like(postId, profile);
-    return true;
+  async likePost(@Param('id') postId: string, @Request() request: any) {
+    const firebaseUserId = request.user.uid;
+    return this.forumService.like(postId, firebaseUserId);
   }
 
   @Post(':id/comment')
@@ -70,8 +70,8 @@ export class ForumController {
     @Body() commentPostDto: CommentPostDTO,
     @Req() request: any,
   ) {
-    const user = request.user;
-    return this.forumService.comment(postId, commentPostDto, user);
+    const firebaseUserId = request.user.uid;
+    return this.forumService.comment(postId, commentPostDto, firebaseUserId);
   }
 
   @Get()
@@ -88,11 +88,10 @@ export class ForumController {
   @ApiQuery({ name: 'page', description: 'Número da página', required: false })
   async getPosts(
     @Query() paginationQuery: PaginationQueryDto,
-    @User() profile: Partial<Profile>,
+    @Request() request: any,
   ) {
-    const profileId = profile.id;
-    console.log(paginationQuery);
-    return this.forumService.findAllPosts(paginationQuery, profileId);
+    const firebaseUserId = request.user.uid;
+    return this.forumService.findAllPosts(paginationQuery, firebaseUserId);
   }
 
   @Get(':id/comments')

@@ -6,6 +6,7 @@ import { DiaryModule } from './modules/diary/diary.module';
 import { ForumModule } from './modules/forum/forum.module';
 import { DatabaseModule } from './config/typeorm';
 import { FirebaseModule } from './modules/firebase/firebase.module';
+import { AuthGuard } from '@modules/auth/guards/auth.guard';
 
 @Module({
   imports: [
@@ -22,6 +23,11 @@ import { FirebaseModule } from './modules/firebase/firebase.module';
     FirebaseModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: 'APP_GUARD',
+      useClass: AuthGuard,
+    },
+  ],
 })
 export class AppModule {}

@@ -11,7 +11,7 @@ import {
 import { Post } from './post.entity';
 import { Profile } from '@modules/user/entities/profile.entity';
 
-@Entity()
+@Entity('likes')
 @Unique(['profileId', 'postId'])
 export class Like {
   @PrimaryGeneratedColumn('uuid')

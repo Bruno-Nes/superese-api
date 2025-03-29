@@ -9,20 +9,4 @@ export class CommentPostDTO {
   @IsNotEmpty()
   @IsString()
   content: string;
-
-  @ApiProperty({
-    description: 'ID do post comentado',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @IsNotEmpty()
-  @IsString()
-  postId: string;
-
-  @ApiProperty({
-    description: 'ID do usuário que comentou',
-    example: '987e6543-e21b-12d3-a456-426614174000',
-  })
-  @IsNotEmpty()
-  @IsString()
-  profileId: string;
 }

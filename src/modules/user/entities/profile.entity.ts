@@ -16,7 +16,7 @@ import { Like } from 'src/modules/forum/entities/like.entity';
 import { Folder } from '@modules/diary/entities/folder.entity';
 import { Friendship } from './friendship.entity';
 
-@Entity({ name: 'profilers' })
+@Entity({ name: 'profiles' })
 export class Profile {
   @PrimaryGeneratedColumn('uuid')
   id: string = uuidv4();

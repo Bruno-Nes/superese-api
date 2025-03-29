@@ -15,23 +15,33 @@ export class UserService {
 
   async createUser(input: CreateUserDTO): Promise<any> {
     const existingUser = await this.findUserByEmail(input.email);
-    if (existingUser) throw new Error('User already exists');
+    if (existingUser)
+      throw new Error('User already exists in internal database');
 
     if (input.birthdayDate) {
       input.birthdayDate = new Date(input.birthdayDate);
     }
 
-    const user = this.userRepository.create(input);
-    await this.userRepository.save(user);
-
-    return this.firebaseService.createUser({
+    const newUser = await this.firebaseService.createUser({
       email: input.email,
       password: input.password,
     });
+
+    const user = this.userRepository.create({
+      ...input,
+      firebaseUid: newUser.uid,
+    });
+    await this.userRepository.save(user);
+
+    return newUser;
   }
 
   async findUserByEmail(email: string): Promise<Profile> {
     return await this.userRepository.findOne({ where: { email } });
+  }
+
+  async findUserByFirebaseUid(id: string): Promise<Profile> {
+    return await this.userRepository.findOne({ where: { firebaseUid: id } });
   }
 
   async findByIdOrThrow(profileId: string) {
