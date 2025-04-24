@@ -21,12 +21,12 @@ import {
 
 @ApiTags('Diaries')
 @ApiBearerAuth()
-@Controller('folders/:folderId/diaries')
+@Controller('folders/diaries')
 @UseGuards(JwtAuthGuard)
 export class DiaryController {
   constructor(private readonly diariesService: DiaryService) {}
 
-  @Post()
+  @Post(':folderId')
   @ApiOperation({ summary: 'Cria um novo diário dentro de uma pasta' })
   @ApiParam({
     name: 'folderId',
@@ -39,10 +39,10 @@ export class DiaryController {
     return this.diariesService.create(folderId, createDiaryDto);
   }
 
-  @Get()
+  @Get(':folderId')
   @ApiOperation({ summary: 'Lista todos os diários de uma pasta' })
   @ApiParam({ name: 'folderId', description: 'ID da pasta' })
-  findAll(@Param('folderId') folderId: string) {
+  findAllByFolder(@Param('folderId') folderId: string) {
     return this.diariesService.findAll(folderId);
   }
 
@@ -68,9 +68,8 @@ export class DiaryController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remove um diário de uma pasta' })
-  @ApiParam({ name: 'folderId', description: 'ID da pasta' })
   @ApiParam({ name: 'id', description: 'ID do diário' })
-  remove(@Param('folderId') folderId: string, @Param('id') id: string) {
-    return this.diariesService.remove(id, folderId);
+  remove(@Param('id') id: string) {
+    return this.diariesService.remove(id);
   }
 }

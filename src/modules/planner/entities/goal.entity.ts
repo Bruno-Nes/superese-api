@@ -10,7 +10,4 @@ export class Goal {
 
   @Column({ default: false })
   completed: boolean;
-
-  @Column({ type: 'timestamptz' })
-  endDate: Date;
 }

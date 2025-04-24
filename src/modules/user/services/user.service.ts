@@ -22,6 +22,10 @@ export class UserService {
       input.birthdayDate = new Date(input.birthdayDate);
     }
 
+    if (!input.username) {
+      input.username = this.gerarUsernameAnonimo();
+    }
+
     const newUser = await this.firebaseService.createUser({
       email: input.email,
       password: input.password,
@@ -52,5 +56,121 @@ export class UserService {
 
   async findAll(): Promise<Profile[]> {
     return await this.userRepository.find();
+  }
+
+  gerarUsernameAnonimo(): string {
+    const adjetivos = [
+      'Anonimo',
+      'Misterioso',
+      'Silencioso',
+      'Valente',
+      'Astuto',
+      'Corajoso',
+      'Gentil',
+      'Sábio',
+      'Esperto',
+      'Veloz',
+      'Pacífico',
+      'Brilhante',
+      'Vibrante',
+      'Oculto',
+      'Noturno',
+      'Invisível',
+      'Sutil',
+      'Feroz',
+      'Solitário',
+      'Alegre',
+      'Tranquilo',
+      'Engraçado',
+      'Sereno',
+      'Leal',
+      'Audaz',
+      'Radiante',
+      'Singelo',
+      'Cauteloso',
+      'Sombrio',
+      'Estelar',
+      'Curioso',
+      'Criativo',
+      'Exótico',
+      'Lendário',
+      'Raro',
+      'Neutro',
+      'Distante',
+      'Calmo',
+      'Ágil',
+      'Nômade',
+      'Leve',
+      'Magnífico',
+      'Brando',
+      'Viajante',
+      'Ocidental',
+      'Sábio',
+      'Fugaz',
+      'Eterno',
+      'Doce',
+      'Gentil',
+    ];
+
+    const substantivos = [
+      'Leão',
+      'Coruja',
+      'Tigre',
+      'Lobo',
+      'Dragão',
+      'Falcão',
+      'Pantera',
+      'Urso',
+      'Cervo',
+      'Raposa',
+      'Águia',
+      'Gavião',
+      'Serpente',
+      'Cavalo',
+      'Gato',
+      'Cão',
+      'Búfalo',
+      'Camaleão',
+      'Jacaré',
+      'Coelho',
+      'Pinguim',
+      'Tubarão',
+      'Polvo',
+      'Golfinho',
+      'Tigre',
+      'Gorila',
+      'Zebra',
+      'Macaco',
+      'Rinoceronte',
+      'Elefante',
+      'Estrela',
+      'Lua',
+      'Cometa',
+      'Meteoro',
+      'Montanha',
+      'Oceano',
+      'Tempestade',
+      'Rochedo',
+      'Selva',
+      'Deserto',
+      'Vento',
+      'Relâmpago',
+      'Neve',
+      'Chama',
+      'Fumaça',
+      'Raio',
+      'Areia',
+      'Folha',
+      'Flor',
+      'Pedra',
+    ];
+
+    const numero = Math.floor(Math.random() * 1000); // Gera número entre 0-999
+
+    const adjetivo = adjetivos[Math.floor(Math.random() * adjetivos.length)];
+    const substantivo =
+      substantivos[Math.floor(Math.random() * substantivos.length)];
+
+    return `${adjetivo}${substantivo}${numero}`;
   }
 }

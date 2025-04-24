@@ -7,7 +7,7 @@ export class Plan {
   id: string;
 
   @Column({ type: 'text' })
-  descricao: string;
+  description: string;
 
   @Column({ type: 'timestamptz' })
   initialDate: Date;

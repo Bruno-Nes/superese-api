@@ -26,6 +26,9 @@ export class CreateUserDTO {
   @IsEmail()
   email: string;
 
+  @IsString()
+  username: string;
+
   @ApiProperty({
     example: '1990-05-20',
     description: 'Data de nascimento do usuário',

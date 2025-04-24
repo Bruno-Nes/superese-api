@@ -47,8 +47,10 @@ export class DiaryService {
     return (await this.diaryRepository.insert(diary)).raw;
   }
 
-  async remove(id: string, folderId: string): Promise<void> {
-    const diary = await this.findOne(id, folderId);
+  async remove(id: string): Promise<void> {
+    const diary = await this.diaryRepository.findOne({
+      where: { id },
+    });
     await this.diaryRepository.remove(diary);
   }
 }

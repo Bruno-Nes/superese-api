@@ -7,6 +7,7 @@ import { ForumModule } from './modules/forum/forum.module';
 import { DatabaseModule } from './config/typeorm';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { AuthGuard } from '@modules/auth/guards/auth.guard';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AuthGuard } from '@modules/auth/guards/auth.guard';
       isGlobal: true,
     }),
     FirebaseModule.forRoot(),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     DiaryModule,
     ForumModule,

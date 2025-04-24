@@ -45,13 +45,16 @@ export class ForumService {
       .createQueryBuilder('post')
       .where('post.profileId = :profileId', { profileId: id })
       .andWhere('post.createdAt > :thirtyMinutesAgo', { thirtyMinutesAgo })
+      .leftJoinAndSelect('post.profile', 'profile')
       .orderBy('post.createdAt', 'DESC')
       .limit(1)
       .getOne();
 
+    const lastPostId = lastUserPost.id;
     const otherPosts = await this.postRepository
       .createQueryBuilder('post')
-      .where('post.profileId != :profileId', { profileId: id })
+      .where('post.id != :postId', { postId: lastPostId })
+      .leftJoinAndSelect('post.profile', 'profile')
       .orderBy('post.createdAt', 'DESC')
       .limit(limit)
       .offset(offset)

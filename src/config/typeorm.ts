@@ -7,7 +7,6 @@ import { Comment } from '@modules/forum/entities/comment.entity';
 import { Like } from '@modules/forum/entities/like.entity';
 import { Post } from '@modules/forum/entities/post.entity';
 import { Diary } from '@modules/diary/entities/diary.entity';
-import { Entry } from '@modules/diary/entities/entry.entity';
 import { Folder } from '@modules/diary/entities/folder.entity';
 import { Achievement } from '@modules/planner/entities/achievement.entity';
 import { Goal } from '@modules/planner/entities/goal.entity';
@@ -15,6 +14,7 @@ import { Medal } from '@modules/planner/entities/medal.entity';
 import { Plan } from '@modules/planner/entities/plan.entity';
 import { Friendship } from '@modules/user/entities/friendship.entity';
 import { Profile } from '@modules/user/entities/profile.entity';
+import { MotivacionalPhrases } from '@modules/user/entities/motivacional-phrases.entity';
 
 const dataSourceOptions: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -26,9 +26,9 @@ const dataSourceOptions: TypeOrmModuleOptions = {
     Like,
     Post,
     Diary,
-    Entry,
     Folder,
     Achievement,
+    MotivacionalPhrases,
     Goal,
     Medal,
     Plan,

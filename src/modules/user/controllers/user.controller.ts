@@ -7,6 +7,7 @@ import {
   ClassSerializerInterceptor,
   Body,
   Get,
+  Logger,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDTO } from '../dtos/create-user.dto';
@@ -15,7 +16,10 @@ import { Public } from 'src/lib/decorators/public-route.decorators';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  private logger: Logger;
+  constructor(private readonly userService: UserService) {
+    this.logger = new Logger(UserController.name);
+  }
 
   @Post()
   @Public()
@@ -29,6 +33,7 @@ export class UserController {
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiBody({ type: CreateUserDTO })
   async createUser(@Body() data: CreateUserDTO): Promise<any> {
+    this.logger.debug(data);
     return await this.userService.createUser(data);
   }
 

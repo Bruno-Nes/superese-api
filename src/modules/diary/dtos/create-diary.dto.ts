@@ -10,9 +10,9 @@ export class CreateDiaryDto {
   @ApiProperty({
     description: 'Conteúdo opcional do diário',
     example: 'Anotações do dia...',
-    required: false,
+    required: true,
   })
   @IsOptional()
   @IsString({ message: 'O conteúdo deve ser uma string' })
-  content?: string;
+  content: string;
 }
