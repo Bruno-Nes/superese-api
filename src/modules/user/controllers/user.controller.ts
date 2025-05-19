@@ -8,6 +8,7 @@ import {
   Body,
   Get,
   Logger,
+  Request,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDTO } from '../dtos/create-user.dto';
@@ -46,5 +47,17 @@ export class UserController {
   })
   async getUsers() {
     return await this.userService.findAll();
+  }
+
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Lista todos os usuários' })
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna dados do usuario logado',
+  })
+  async getMe(@Request() request: any) {
+    const firebaseUserId = request.user.uid;
+    return await this.userService.findUserByFirebaseUid(firebaseUserId);
   }
 }

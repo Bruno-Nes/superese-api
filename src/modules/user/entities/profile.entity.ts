@@ -15,6 +15,7 @@ import { Achievement } from 'src/modules/planner/entities/achievement.entity';
 import { Like } from 'src/modules/forum/entities/like.entity';
 import { Folder } from '@modules/diary/entities/folder.entity';
 import { Friendship } from './friendship.entity';
+import { RecoveryStatus } from './recovery-status.entity';
 
 @Entity({ name: 'profiles' })
 export class Profile {
@@ -59,6 +60,14 @@ export class Profile {
 
   @OneToMany(() => Post, (post) => post.profile)
   posts: Post[];
+
+  @OneToMany(() => RecoveryStatus, (status) => status.profile, {
+    cascade: true,
+  })
+  recoveryStatuses: RecoveryStatus[];
+
+  @Column('decimal', { nullable: true, precision: 10, scale: 2 })
+  averageBettingExpensePerWeek: number | null;
 
   @OneToMany(() => Folder, (folder) => folder.profile)
   folders: Folder[];

@@ -4,12 +4,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDTO } from '../dtos/create-user.dto';
 import { FirebaseService } from '@modules/firebase/firebase.service';
+import { RecoveryStatusService } from '@modules/user/services/recovery-status.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(Profile)
     private readonly userRepository: Repository<Profile>,
+    private readonly recovery: RecoveryStatusService,
     private readonly firebaseService: FirebaseService,
   ) {}
 
@@ -36,6 +38,8 @@ export class UserService {
       firebaseUid: newUser.uid,
     });
     await this.userRepository.save(user);
+
+    await this.recovery.markRelapse(user.firebaseUid);
 
     return newUser;
   }

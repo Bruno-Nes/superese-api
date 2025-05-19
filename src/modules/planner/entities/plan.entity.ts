@@ -1,5 +1,12 @@
 import { Profile } from '@modules/user/entities/profile.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Goal } from './goal.entity';
 
 @Entity('plans')
 export class Plan {
@@ -17,4 +24,7 @@ export class Plan {
 
   @ManyToOne(() => Profile, (profile) => profile.plans)
   profile: Profile;
+
+  @OneToMany(() => Goal, (goal) => goal.plan, { cascade: true })
+  goals: Goal[];
 }

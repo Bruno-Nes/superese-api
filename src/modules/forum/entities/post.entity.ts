@@ -25,13 +25,19 @@ export class Post {
   @Column({ type: 'text' })
   content: string;
 
-  @OneToMany(() => Like, (like) => like.post)
+  @OneToMany(() => Like, (like) => like.post, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   likes: Like[];
 
   @Column({ default: 0 })
   commentsCount: number;
 
-  @OneToMany(() => Comment, (comment) => comment.post)
+  @OneToMany(() => Comment, (comment) => comment.post, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   comments: Comment[];
 
   @Column({ default: 0 })

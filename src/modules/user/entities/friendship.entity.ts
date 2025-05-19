@@ -5,6 +5,7 @@ import {
   ManyToOne,
   Unique,
   CreateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { Profile } from './profile.entity';
 
@@ -23,11 +24,13 @@ export class Friendship {
   @ManyToOne(() => Profile, (user) => user.sentFriendRequests, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'requester_id' })
   requester: Profile;
 
   @ManyToOne(() => Profile, (user) => user.receivedFriendRequests, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'addressee_id' })
   addressee: Profile;
 
   @Column({
@@ -38,5 +41,6 @@ export class Friendship {
   status: FriendshipStatus;
 
   @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

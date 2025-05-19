@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { Post } from './post.entity';
 import { Profile } from '@modules/user/entities/profile.entity';
@@ -23,6 +24,15 @@ export class Comment {
 
   @Column({ type: 'text' })
   content: string;
+
+  @ManyToOne(() => Comment, (comment) => comment.replies, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  parentComment: Comment;
+
+  @OneToMany(() => Comment, (comment) => comment.parentComment)
+  replies: Comment[];
 
   @CreateDateColumn()
   createdAt: Date;

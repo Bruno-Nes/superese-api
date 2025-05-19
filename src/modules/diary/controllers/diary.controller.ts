@@ -8,21 +8,14 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { DiaryService } from '../services/diary.service';
 import { CreateDiaryDto } from '../dtos/create-diary.dto';
 import { UpdateDiaryDto } from '../dtos/update-diary.dto';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { AuthGuard } from '@modules/auth/guards/auth.guard';
 
 @ApiTags('Diaries')
-@ApiBearerAuth()
-@Controller('folders/diaries')
-@UseGuards(JwtAuthGuard)
+@Controller('diaries')
 export class DiaryController {
   constructor(private readonly diariesService: DiaryService) {}
 
@@ -32,11 +25,12 @@ export class DiaryController {
     name: 'folderId',
     description: 'ID da pasta onde o diário será criado',
   })
+  @UseGuards(AuthGuard)
   create(
     @Param('folderId') folderId: string,
     @Body() createDiaryDto: CreateDiaryDto,
   ) {
-    return this.diariesService.create(folderId, createDiaryDto);
+    return this.diariesService.createDiary(folderId, createDiaryDto);
   }
 
   @Get(':folderId')

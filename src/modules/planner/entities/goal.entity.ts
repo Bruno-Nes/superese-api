@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Plan } from './plan.entity';
 
 @Entity('goals')
 export class Goal {
@@ -10,4 +11,7 @@ export class Goal {
 
   @Column({ default: false })
   completed: boolean;
+
+  @ManyToOne(() => Plan, (plan) => plan.goals, { onDelete: 'CASCADE' })
+  plan: Plan;
 }

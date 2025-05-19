@@ -10,6 +10,7 @@ import {
   Request,
   Req,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -48,6 +49,7 @@ export class ForumController {
   @ApiOperation({ summary: 'Dá like em um post' })
   @ApiResponse({ status: 200, description: 'Like registrado com sucesso' })
   @ApiResponse({ status: 404, description: 'Post não encontrado' })
+  @UseGuards(AuthGuard)
   @ApiParam({ name: 'id', description: 'ID do post', example: '1234' })
   async likePost(@Param('id') postId: string, @Request() request: any) {
     const firebaseUserId = request.user.uid;
@@ -65,6 +67,7 @@ export class ForumController {
   @ApiResponse({ status: 404, description: 'Post não encontrado' })
   @ApiParam({ name: 'id', description: 'ID do post', example: '1234' })
   @ApiBody({ type: CommentPostDTO })
+  @UseGuards(AuthGuard)
   async commentPost(
     @Param('id') postId: string,
     @Body() commentPostDto: CommentPostDTO,
@@ -85,6 +88,7 @@ export class ForumController {
     description: 'Número máximo de posts por página',
     required: false,
   })
+  @UseGuards(AuthGuard)
   @ApiQuery({ name: 'page', description: 'Número da página', required: false })
   async getPosts(
     @Query() paginationQuery: PaginationQueryDto,
@@ -103,7 +107,7 @@ export class ForumController {
   @ApiResponse({ status: 404, description: 'Post não encontrado' })
   @ApiParam({ name: 'id', description: 'ID do post', example: '1234' })
   async getComments(@Param('id') postId: string) {
-    return await this.forumService.getCommentsByPost(postId);
+    return await this.forumService.findCommentsByPost(postId);
   }
 
   @Get(':id/likes')
@@ -113,5 +117,12 @@ export class ForumController {
   @ApiParam({ name: 'id', description: 'ID do post', example: '1234' })
   async getLikes(@Param('id') postId: string) {
     return await this.forumService.getLikesByPost(postId);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard)
+  async deletePost(@Param('id') postId: string, @Request() request: any) {
+    const firebaseUserId = request.user.uid;
+    return await this.forumService.removePost(postId, firebaseUserId);
   }
 }

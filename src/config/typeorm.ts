@@ -15,6 +15,7 @@ import { Plan } from '@modules/planner/entities/plan.entity';
 import { Friendship } from '@modules/user/entities/friendship.entity';
 import { Profile } from '@modules/user/entities/profile.entity';
 import { MotivacionalPhrases } from '@modules/user/entities/motivacional-phrases.entity';
+import { RecoveryStatus } from '@modules/user/entities/recovery-status.entity';
 
 const dataSourceOptions: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -32,6 +33,7 @@ const dataSourceOptions: TypeOrmModuleOptions = {
     Goal,
     Medal,
     Plan,
+    RecoveryStatus,
   ],
   synchronize: false,
   migrations: ['dist/*-migrations.js'],

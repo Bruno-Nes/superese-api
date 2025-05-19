@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreatePostDTO } from '../dtos/create-post.dto';
 import { DeepPartial, Repository } from 'typeorm';
 import { Post } from '../entities/post.entity';
@@ -36,7 +40,10 @@ export class ForumService {
   async findAllPosts(paginationQuery: PaginationQueryDto, firebaseUid: string) {
     const profile: Profile =
       await this.userService.findUserByFirebaseUid(firebaseUid);
-    const { id } = profile;
+    if (!profile) {
+      throw new Error('Profile not foung!');
+    }
+    const id = profile.id;
 
     const { limit, offset } = paginationQuery;
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
@@ -50,7 +57,8 @@ export class ForumService {
       .limit(1)
       .getOne();
 
-    const lastPostId = lastUserPost.id;
+    const lastPostId = lastUserPost ? lastUserPost.id : '';
+
     const otherPosts = await this.postRepository
       .createQueryBuilder('post')
       .where('post.id != :postId', { postId: lastPostId })
@@ -77,10 +85,21 @@ export class ForumService {
     if (!post) {
       throw new Error('Post not found');
     }
+
+    let parentComment = null;
+    if (comment.parentCommentId) {
+      parentComment = await this.commentRepository.findOne({
+        where: { id: comment.parentCommentId },
+      });
+      if (!parentComment)
+        throw new NotFoundException('Parent comment not found');
+    }
+
     const newComment = this.commentRepository.create({
       ...comment,
       post,
       profile: { id },
+      parentComment,
     });
     post.commentsCount++;
     await this.postRepository.save(post);
@@ -103,7 +122,7 @@ export class ForumService {
       await this.likeRepository.remove(like);
       post.likesCount--;
       await this.postRepository.save(post);
-      return { message: 'Post unliked' };
+      return { value: false, message: 'Post unliked' };
     }
     const newLike = this.likeRepository.create({
       postId: postId,
@@ -112,14 +131,28 @@ export class ForumService {
     post.likesCount++;
     await this.postRepository.save(post);
     await this.likeRepository.save(newLike);
-    return { message: 'Post liked' };
+    return { value: true, message: 'Post liked' };
   }
 
-  async getCommentsByPost(postId: string): Promise<Comment[]> {
-    return await this.commentRepository.find({
-      where: { post: { id: postId } },
-      relations: { profile: true },
+  async findCommentsByPost(postId: string) {
+    const comments = await this.commentRepository.find({
+      where: { post: { id: postId }, parentComment: null },
+      relations: ['user', 'replies', 'replies.user', 'replies.replies'],
+      order: { createdAt: 'ASC' },
     });
+
+    const buildTree = (comment: Comment): any => ({
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      profile: {
+        id: comment.profile.id,
+        username: comment.profile.username,
+      },
+      replies: (comment.replies || []).map(buildTree),
+    });
+
+    return comments.map(buildTree);
   }
 
   async getLikesByPost(postId: string) {
@@ -127,5 +160,34 @@ export class ForumService {
       where: { post: { id: postId } },
       relations: { profile: true },
     });
+  }
+
+  async removePost(postId: string, firebaseUid: string) {
+    const profile: Profile =
+      await this.userService.findUserByFirebaseUid(firebaseUid);
+    if (!profile) {
+      throw new NotFoundException('Profile not foung!');
+    }
+
+    const profileId = profile.id;
+
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['profile', 'likes', 'comments'],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post não encontrado');
+    }
+
+    if (post.profile.id !== profileId) {
+      throw new ForbiddenException(
+        'Você não tem permissão para deletar este post',
+      );
+    }
+    await this.commentRepository.delete({ post: { id: postId } });
+    await this.likeRepository.delete({ post: { id: postId } });
+
+    await this.postRepository.delete(postId);
   }
 }
