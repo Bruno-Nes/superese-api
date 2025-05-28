@@ -8,6 +8,7 @@ import { DatabaseModule } from './config/typeorm';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { AuthGuard } from '@modules/auth/guards/auth.guard';
 import { ScheduleModule } from '@nestjs/schedule';
+import { PlannerModule } from '@modules/planner/planner.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     DiaryModule,
     ForumModule,
     FirebaseModule,
+    PlannerModule,
   ],
   controllers: [],
   providers: [

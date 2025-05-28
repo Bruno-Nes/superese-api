@@ -9,11 +9,19 @@ import {
   Get,
   Logger,
   Request,
+  Param,
+  UseGuards,
+  Put,
+  UploadedFile,
+  Patch,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDTO } from '../dtos/create-user.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from 'src/lib/decorators/public-route.decorators';
+import { AuthGuard } from '@modules/auth/guards/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UpdateProfileDto } from '../dtos/update-user.dto';
 
 @Controller('users')
 export class UserController {
@@ -49,6 +57,29 @@ export class UserController {
     return await this.userService.findAll();
   }
 
+  @Get('get-user/:id')
+  @UseGuards(AuthGuard)
+  async findUserById(@Param('id') userId: string, @Request() request: any) {
+    const firebaseUserId = request.user.uid;
+    return this.userService.getUserDetails(userId, firebaseUserId);
+  }
+
+  @Patch()
+  @UseInterceptors(FileInterceptor('avatar'))
+  async updateProfile(
+    @Request() request: any,
+    @Body() updateDto: UpdateProfileDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    const firebaseUserId = request.user.uid;
+    const updated = await this.userService.updateProfile(
+      firebaseUserId,
+      updateDto,
+      file,
+    );
+    return { message: 'Perfil atualizado com sucesso', profile: updated };
+  }
+
   @Get('me')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Lista todos os usuários' })
@@ -56,6 +87,7 @@ export class UserController {
     status: 200,
     description: 'Retorna dados do usuario logado',
   })
+  @UseGuards(AuthGuard)
   async getMe(@Request() request: any) {
     const firebaseUserId = request.user.uid;
     return await this.userService.findUserByFirebaseUid(firebaseUserId);

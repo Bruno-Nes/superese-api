@@ -4,6 +4,8 @@ import { CreateRequest } from 'firebase-admin/lib/auth/auth-config';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { FirebaseConfigService } from './firebase-config.service';
+import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class FirebaseService {
@@ -101,5 +103,26 @@ export class FirebaseService {
       throw new BadRequestException(message);
     }
     throw new Error(error.message);
+  }
+
+  async uploadImage(file: Express.Multer.File, folder = 'images') {
+    const bucket = firebaseAdmin.storage().bucket();
+    const fileName = `${folder}/${uuidv4()}${path.extname(file.originalname)}`;
+    const fileUpload = bucket.file(fileName);
+
+    await fileUpload.save(file.buffer, {
+      metadata: {
+        contentType: file.mimetype,
+        metadata: {
+          firebaseStorageDownloadTokens: uuidv4(), // token para acesso público
+        },
+      },
+    });
+
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(
+      fileName,
+    )}?alt=media`;
+
+    return publicUrl;
   }
 }

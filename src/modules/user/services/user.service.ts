@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Profile } from '../entities/profile.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDTO } from '../dtos/create-user.dto';
 import { FirebaseService } from '@modules/firebase/firebase.service';
 import { RecoveryStatusService } from '@modules/user/services/recovery-status.service';
+import { UpdateProfileDto } from '../dtos/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -60,6 +61,52 @@ export class UserService {
 
   async findAll(): Promise<Profile[]> {
     return await this.userRepository.find();
+  }
+
+  async updateProfile(
+    firebaseUid: string,
+    updateDto: UpdateProfileDto,
+    avatarFile?: Express.Multer.File,
+  ): Promise<Profile> {
+    const profile = await this.userRepository.findOne({
+      where: { firebaseUid },
+    });
+
+    if (!profile) throw new NotFoundException('Profile not found');
+
+    if (avatarFile) {
+      const avatarUrl = await this.firebaseService.uploadImage(
+        avatarFile,
+        'avatars',
+      );
+      profile.avatar = avatarUrl;
+    }
+
+    Object.assign(profile, updateDto);
+
+    return this.userRepository.save(profile);
+  }
+
+  async getUserDetails(userId: string, firebaseUid: string) {
+    const profile: Profile = await this.findUserByFirebaseUid(firebaseUid);
+    if (!profile) {
+      throw new Error('Profile not found!');
+    }
+    const result = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    return result;
+  }
+
+  async saveUserAvatar(firebaseUid: string, file: any) {
+    const profile: Profile = await this.findUserByFirebaseUid(firebaseUid);
+    if (!profile) {
+      throw new Error('Profile not found!');
+    }
+    const imageUrl = await this.firebaseService.uploadImage(file, 'avatars');
+    profile.avatar = imageUrl;
+    this.userRepository.save(profile);
   }
 
   gerarUsernameAnonimo(): string {

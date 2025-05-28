@@ -41,7 +41,7 @@ export class ForumService {
     const profile: Profile =
       await this.userService.findUserByFirebaseUid(firebaseUid);
     if (!profile) {
-      throw new Error('Profile not foung!');
+      throw new Error('Profile not found!');
     }
     const id = profile.id;
 
@@ -72,9 +72,19 @@ export class ForumService {
   }
 
   async findPostById(id: string) {
-    return await this.postRepository.findOne({
+    const post = await this.postRepository.findOne({
       where: { id },
+      relations: {
+        profile: true,
+      },
     });
+
+    if (post) {
+      const comments = await this.findCommentsByPost(post.id);
+      post.comments = comments;
+    }
+
+    return post;
   }
 
   async comment(postId: string, comment: CommentPostDTO, firebaseUid: string) {
@@ -137,7 +147,7 @@ export class ForumService {
   async findCommentsByPost(postId: string) {
     const comments = await this.commentRepository.find({
       where: { post: { id: postId }, parentComment: null },
-      relations: ['user', 'replies', 'replies.user', 'replies.replies'],
+      relations: ['profile', 'replies', 'replies.profile', 'replies.replies'],
       order: { createdAt: 'ASC' },
     });
 
@@ -188,6 +198,6 @@ export class ForumService {
     await this.commentRepository.delete({ post: { id: postId } });
     await this.likeRepository.delete({ post: { id: postId } });
 
-    await this.postRepository.delete(postId);
+    return await this.postRepository.delete(postId);
   }
 }

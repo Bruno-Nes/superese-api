@@ -7,10 +7,7 @@ export class Goal {
   id: string;
 
   @Column({ type: 'text' })
-  descricao: string;
-
-  @Column({ default: false })
-  completed: boolean;
+  description: string;
 
   @ManyToOne(() => Plan, (plan) => plan.goals, { onDelete: 'CASCADE' })
   plan: Plan;

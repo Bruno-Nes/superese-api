@@ -1,5 +1,7 @@
+import { CreateGoalDTO } from './create-goal.dto';
+
 export class CreatePlanDTO {
   description: string;
-  initialDate: Date;
-  endDate: Date;
+  duration: number;
+  goals: CreateGoalDTO[];
 }

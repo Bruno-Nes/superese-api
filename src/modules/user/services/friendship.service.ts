@@ -94,10 +94,18 @@ export class FriendshipService {
   }
 
   async getFriends(
-    userId: string,
+    firebaseId: string,
     search?: string,
   ): Promise<{ total: number; results: Profile[] }> {
-    console.log('usuario', userId);
+    const requestedProfile =
+      await this.userService.findUserByFirebaseUid(firebaseId);
+
+    if (!requestedProfile) {
+      throw new Error('Profile not found!');
+    }
+
+    const { id: userId } = requestedProfile;
+
     const friendships = await this.friendshipRepository.find({
       where: [
         { requester: { id: userId }, status: FriendshipStatus.ACCEPTED },
@@ -110,13 +118,18 @@ export class FriendshipService {
       f.requester.id === userId ? f.addressee : f.requester,
     );
 
-    const filtered = search
+    let filtered = search
       ? friends.filter((f) =>
           `${f.firstName} ${f.lastName}`
             .toLowerCase()
             .includes(search.toLowerCase()),
         )
       : friends;
+
+    filtered = friends.filter((f) => {
+      console.log(f);
+      return f.id !== userId;
+    });
 
     return {
       total: filtered.length,
@@ -125,16 +138,25 @@ export class FriendshipService {
   }
 
   async getPendingRequests(
-    userId: string,
+    firebaseUid: string,
     search?: string,
   ): Promise<{ total: number; results: Friendship[] }> {
+    const profile: Profile =
+      await this.userService.findUserByFirebaseUid(firebaseUid);
+    if (!profile) {
+      throw new NotFoundException('Profile not foung!');
+    }
+
+    const { id } = profile;
     const requests = await this.friendshipRepository.find({
       where: {
-        addressee: { id: userId },
+        addressee: { id },
         status: FriendshipStatus.PENDING,
       },
       relations: ['requester'],
     });
+
+    console.log(requests);
 
     const filtered = search
       ? requests.filter((r) =>
@@ -148,5 +170,24 @@ export class FriendshipService {
       total: filtered.length,
       results: filtered,
     };
+  }
+
+  async verifyFriendship(userId: string, loggedFirebaseUserId: string) {
+    const requestedUser = await this.userService.findByIdOrThrow(userId);
+    const currenteUser =
+      await this.userService.findUserByFirebaseUid(loggedFirebaseUserId);
+
+    if (!requestedUser || !currenteUser) {
+      throw new Error('Users data not found!');
+    }
+
+    const result = await this.friendshipRepository.find({
+      where: {
+        addressee: { id: userId },
+        requester: { id: currenteUser.id },
+        status: FriendshipStatus.ACCEPTED,
+      },
+    });
+    return result.length > 0;
   }
 }

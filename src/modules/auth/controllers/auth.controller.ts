@@ -21,7 +21,6 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   async login(@Body() request: LoginDTO) {
-    this.logger.debug(request);
     return this.authService.login(request);
   }
 

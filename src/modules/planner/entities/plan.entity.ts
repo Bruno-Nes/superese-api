@@ -16,11 +16,14 @@ export class Plan {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'timestamptz' })
-  initialDate: Date;
+  @Column()
+  duration: number;
 
-  @Column({ type: 'timestamptz' })
-  endDate: Date;
+  @Column()
+  progress: number;
+
+  @Column({ default: false })
+  completed: boolean;
 
   @ManyToOne(() => Profile, (profile) => profile.plans)
   profile: Profile;

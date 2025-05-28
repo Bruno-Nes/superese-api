@@ -56,17 +56,26 @@ export class FriendshipController {
   }
 
   @Get('friends')
+  @UseGuards(AuthGuard)
   async getFriends(@Request() request: any, @Query('search') search?: string) {
-    const userId = request.user.id;
+    const userId = request.user.uid;
     return this.friendshipService.getFriends(userId, search);
   }
 
+  @Get('verify/:id')
+  @UseGuards(AuthGuard)
+  async verifyFriendship(@Param('id') id: string, @Request() request: any) {
+    const userId = request.user.uid;
+    return this.friendshipService.verifyFriendship(id, userId);
+  }
+
   @Get('requests/pending')
+  @UseGuards(AuthGuard)
   async getPendingRequests(
     @Request() request: any,
     @Query('search') search?: string,
   ) {
-    const userId = request.user.id;
+    const userId = request.user.uid;
     return this.friendshipService.getPendingRequests(userId, search);
   }
 }

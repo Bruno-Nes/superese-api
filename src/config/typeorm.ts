@@ -14,8 +14,9 @@ import { Medal } from '@modules/planner/entities/medal.entity';
 import { Plan } from '@modules/planner/entities/plan.entity';
 import { Friendship } from '@modules/user/entities/friendship.entity';
 import { Profile } from '@modules/user/entities/profile.entity';
-import { MotivacionalPhrases } from '@modules/user/entities/motivacional-phrases.entity';
 import { RecoveryStatus } from '@modules/user/entities/recovery-status.entity';
+import { Message } from '@modules/user/entities/message.entity';
+import { ConversationHistory } from '@modules/user/entities/conversation-history.entity';
 
 const dataSourceOptions: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -29,11 +30,12 @@ const dataSourceOptions: TypeOrmModuleOptions = {
     Diary,
     Folder,
     Achievement,
-    MotivacionalPhrases,
+    ConversationHistory,
     Goal,
     Medal,
     Plan,
     RecoveryStatus,
+    Message,
   ],
   synchronize: false,
   migrations: ['dist/*-migrations.js'],

@@ -16,6 +16,8 @@ import { Like } from 'src/modules/forum/entities/like.entity';
 import { Folder } from '@modules/diary/entities/folder.entity';
 import { Friendship } from './friendship.entity';
 import { RecoveryStatus } from './recovery-status.entity';
+import { Message } from './message.entity';
+import { ConversationHistory } from './conversation-history.entity';
 
 @Entity({ name: 'profiles' })
 export class Profile {
@@ -61,6 +63,9 @@ export class Profile {
   @OneToMany(() => Post, (post) => post.profile)
   posts: Post[];
 
+  @OneToMany(() => ConversationHistory, (conv) => conv.profile)
+  conversarionHistory: ConversationHistory[];
+
   @OneToMany(() => RecoveryStatus, (status) => status.profile, {
     cascade: true,
   })
@@ -83,6 +88,12 @@ export class Profile {
 
   @OneToOne(() => Like, (like) => like.profile)
   like: Like;
+
+  @OneToMany(() => Message, (message) => message.sender)
+  sentMessages: Message[];
+
+  @OneToMany(() => Message, (message) => message.receiver)
+  receivedMessages: Message[];
 
   @CreateDateColumn()
   createdAt: Date;

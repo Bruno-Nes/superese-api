@@ -77,6 +77,12 @@ export class ForumController {
     return this.forumService.comment(postId, commentPostDto, firebaseUserId);
   }
 
+  @Get('post-details/:id')
+  @UseGuards(AuthGuard)
+  async getPostDetails(@Param('id') postId: string) {
+    return this.forumService.findPostById(postId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Obtém todos os posts' })
   @ApiResponse({
