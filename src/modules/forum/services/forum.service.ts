@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreatePostDTO } from '../dtos/create-post.dto';
 import { DeepPartial, Repository } from 'typeorm';
 import { Post } from '../entities/post.entity';
@@ -8,6 +12,7 @@ import { UserService } from '@modules/user/services/user.service';
 import { Like } from '../entities/like.entity';
 import { Comment } from '../entities/comment.entity';
 import { CommentPostDTO } from '../dtos/create-comment.dto';
+import { Profile } from '@modules/user/entities/profile.entity';
 
 @Injectable()
 export class ForumService {
@@ -21,54 +26,76 @@ export class ForumService {
     private readonly userService: UserService,
   ) {}
 
-  async create(post: CreatePostDTO, user: any) {
-    const userEntity = await this.userService.findByIdOrThrow(user.id);
+  async create(post: CreatePostDTO, firebaseUid: string) {
+    const profile = await this.userService.findUserByFirebaseUid(firebaseUid);
     const newPost = this.postRepository.create({
       ...post,
-      user: userEntity,
+      profile,
       likesCount: 0,
     });
     await this.postRepository.save(newPost);
     return newPost;
   }
 
-  async findAllPosts(paginationQuery: PaginationQueryDto, userId: string) {
-    const { limit, offset } = paginationQuery;
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-    const lastUserPost = await this.postRepository
-      .createQueryBuilder('post')
-      .where('post.userId = :userId', { userId })
-      .andWhere('post.createdAt > :thirtyMinutesAgo', { thirtyMinutesAgo })
-      .orderBy('post.createdAt', 'DESC')
-      .limit(1)
-      .getOne();
+  async findAllPosts(paginationQuery: PaginationQueryDto, firebaseUid: string) {
+    const profile: Profile =
+      await this.userService.findUserByFirebaseUid(firebaseUid);
+    if (!profile) {
+      throw new Error('Profile not found!');
+    }
 
-    const otherPosts = await this.postRepository
+    const { limit, offset } = paginationQuery;
+
+    const posts = await this.postRepository
       .createQueryBuilder('post')
-      .where('post.userId != :userId', { userId })
+      .leftJoinAndSelect('post.profile', 'profile')
       .orderBy('post.createdAt', 'DESC')
       .limit(limit)
       .offset(offset)
       .getMany();
 
-    return lastUserPost ? [lastUserPost, ...otherPosts] : otherPosts;
+    return posts;
   }
 
   async findPostById(id: string) {
-    return await this.postRepository.findOne({
+    const post = await this.postRepository.findOne({
       where: { id },
+      relations: {
+        profile: true,
+      },
     });
+
+    if (post) {
+      const comments = await this.findCommentsByPost(post.id);
+      post.comments = comments;
+    }
+
+    return post;
   }
 
-  async comment(postId: string, comment: CommentPostDTO, user: any) {
+  async comment(postId: string, comment: CommentPostDTO, firebaseUid: string) {
+    const profile: Profile =
+      await this.userService.findUserByFirebaseUid(firebaseUid);
+    const { id } = profile;
     const post: DeepPartial<Post> = await this.findPostById(postId);
     if (!post) {
       throw new Error('Post not found');
     }
+
+    let parentComment = null;
+    if (comment.parentCommentId) {
+      parentComment = await this.commentRepository.findOne({
+        where: { id: comment.parentCommentId },
+      });
+      if (!parentComment)
+        throw new NotFoundException('Parent comment not found');
+    }
+
     const newComment = this.commentRepository.create({
       ...comment,
       post,
-      user: { id: user.id },
+      profile: { id },
+      parentComment,
     });
     post.commentsCount++;
     await this.postRepository.save(post);
@@ -76,38 +103,87 @@ export class ForumService {
     return newComment;
   }
 
-  async like(postId: string, user: any) {
+  async like(postId: string, firebaseUid: string) {
+    const profile: Profile =
+      await this.userService.findUserByFirebaseUid(firebaseUid);
+    const { id } = profile;
     const post: DeepPartial<Post> = await this.findPostById(postId);
     if (!post) {
       throw new Error('Post not found');
     }
     const like = await this.likeRepository.findOne({
-      where: { post: { id: postId }, user: { id: user.id } },
+      where: { post: { id: postId }, profile: { id } },
     });
     if (like) {
       await this.likeRepository.remove(like);
       post.likesCount--;
       await this.postRepository.save(post);
-      return { message: 'Post unliked' };
+      return { value: false, message: 'Post unliked' };
     }
-    const newLike = this.likeRepository.create(post);
+    const newLike = this.likeRepository.create({
+      postId: postId,
+      profileId: id,
+    });
     post.likesCount++;
     await this.postRepository.save(post);
     await this.likeRepository.save(newLike);
-    return { message: 'Post liked' };
+    return { value: true, message: 'Post liked' };
   }
 
-  async getCommentsByPost(postId: string): Promise<Comment[]> {
-    return await this.commentRepository.find({
-      where: { post: { id: postId } },
-      relations: { user: true },
+  async findCommentsByPost(postId: string) {
+    const comments = await this.commentRepository.find({
+      where: { post: { id: postId }, parentComment: null },
+      relations: ['profile', 'replies', 'replies.profile', 'replies.replies'],
+      order: { createdAt: 'ASC' },
     });
+
+    const buildTree = (comment: Comment): any => ({
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      profile: {
+        id: comment.profile.id,
+        username: comment.profile.username,
+      },
+      replies: (comment.replies || []).map(buildTree),
+    });
+
+    return comments.map(buildTree);
   }
 
   async getLikesByPost(postId: string) {
     return await this.likeRepository.find({
       where: { post: { id: postId } },
-      relations: { user: true },
+      relations: { profile: true },
     });
+  }
+
+  async removePost(postId: string, firebaseUid: string) {
+    const profile: Profile =
+      await this.userService.findUserByFirebaseUid(firebaseUid);
+    if (!profile) {
+      throw new NotFoundException('Profile not foung!');
+    }
+
+    const profileId = profile.id;
+
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['profile', 'likes', 'comments'],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post não encontrado');
+    }
+
+    if (post.profile.id !== profileId) {
+      throw new ForbiddenException(
+        'Você não tem permissão para deletar este post',
+      );
+    }
+    await this.commentRepository.delete({ post: { id: postId } });
+    await this.likeRepository.delete({ post: { id: postId } });
+
+    return await this.postRepository.delete(postId);
   }
 }

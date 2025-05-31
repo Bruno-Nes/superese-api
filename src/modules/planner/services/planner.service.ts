@@ -1,0 +1,161 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { Plan } from '../entities/plan.entity';
+import { Goal } from '../entities/goal.entity';
+import { CreatePlanDTO } from '../dtos/create-plan.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Profile } from '@modules/user/entities/profile.entity';
+import { CreateGoalDTO } from '../dtos/create-goal.dto';
+
+@Injectable()
+export class PlannerService {
+  constructor(
+    @InjectRepository(Plan)
+    private readonly planRepository: Repository<Plan>,
+
+    @InjectRepository(Goal)
+    private readonly goalRepository: Repository<Goal>,
+
+    @InjectRepository(Profile)
+    private readonly profileRepository: Repository<Profile>,
+  ) {}
+
+  async createPlan(input: CreatePlanDTO, firebaseUid: string) {
+    console.log('Creating plan with input:', input);
+    const profile: Profile = await this.profileRepository.findOneBy({
+      firebaseUid,
+    });
+    if (!profile) {
+      throw new NotFoundException('Profile not foung!');
+    }
+
+    const { duration, description, goals } = input;
+
+    const plan = this.planRepository.create({
+      description,
+      duration,
+      progress: 0,
+      completed: false,
+      profile,
+    });
+    console.log('Plan created:', plan);
+
+    // Salvar o plano primeiro para obter o ID
+    const savedPlan = await this.planRepository.save(plan);
+
+    const newGoals = goals.map((goal) => {
+      if (typeof goal !== 'string') {
+        throw new Error('Goal must be a string');
+      }
+
+      return {
+        description: goal,
+      };
+    });
+
+    await this.createGoals(newGoals, savedPlan.id);
+
+    return savedPlan;
+  }
+
+  async increaseProgress(planId: string) {
+    const plan = await this.planRepository.findOneBy({ id: planId });
+    if (!plan) {
+      throw new Error('Plan not found!');
+    }
+
+    if (!plan.completed) {
+      plan.progress += 1;
+    }
+
+    if (plan.progress === plan.duration) {
+      plan.completed = true;
+    }
+
+    await this.planRepository.save(plan);
+  }
+
+  async decreaseProgress(planId: string) {
+    const plan = await this.planRepository.findOneBy({ id: planId });
+    if (!plan) {
+      throw new Error('Plan not found!');
+    }
+
+    if (plan.completed) {
+      plan.completed = false;
+    }
+
+    plan.progress -= 1;
+
+    if (plan.progress < 1) {
+      plan.progress = 0;
+    }
+
+    await this.planRepository.save(plan);
+  }
+
+  async findAllByProfile(firebaseUid: string): Promise<Plan[]> {
+    const profile: Profile = await this.profileRepository.findOneBy({
+      firebaseUid,
+    });
+    if (!profile) {
+      throw new NotFoundException('Profile not foung!');
+    }
+
+    const profileId = profile.id;
+
+    return this.planRepository.find({
+      where: {
+        profile: { id: profileId },
+      },
+      relations: ['goals'],
+    });
+  }
+
+  async createGoals(goals: CreateGoalDTO[], planId: string) {
+    const plan = await this.planRepository.findOneBy({ id: planId });
+    if (!plan) {
+      throw new NotFoundException('Plan not found!');
+    }
+    if (goals.length < 1) {
+      throw new Error('Therer is no goals to save');
+    }
+    goals = goals.map((goal) => {
+      return this.goalRepository.create({
+        description: goal.description,
+        plan,
+      });
+    });
+    return await this.goalRepository.insert(goals);
+  }
+
+  async deletePlan(planId: string, firebaseUid: string) {
+    // Verificar se o perfil existe
+    const profile: Profile = await this.profileRepository.findOneBy({
+      firebaseUid,
+    });
+    if (!profile) {
+      throw new NotFoundException('Profile not found!');
+    }
+
+    // Buscar o plano com suas metas
+    const plan = await this.planRepository.findOne({
+      where: { id: planId, profile: { id: profile.id } },
+      relations: ['goals'],
+    });
+
+    if (!plan) {
+      throw new NotFoundException(
+        'Plan not found or does not belong to this user!',
+      );
+    }
+
+    // Deletar o plano (as metas serão deletadas automaticamente devido ao cascade)
+    await this.planRepository.remove(plan);
+
+    return {
+      success: true,
+      message: 'Plan and its goals deleted successfully',
+    };
+  }
+}

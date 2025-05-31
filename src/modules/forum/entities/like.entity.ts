@@ -9,27 +9,27 @@ import {
   Column,
 } from 'typeorm';
 import { Post } from './post.entity';
-import { User } from 'src/modules/user/entities/user.entity';
+import { Profile } from '@modules/user/entities/profile.entity';
 
-@Entity()
-@Unique(['userId', 'postId'])
+@Entity('likes')
+@Unique(['profileId', 'postId'])
 export class Like {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => User, (user) => user.like, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
-  user: User;
+  @OneToOne(() => Profile, (profile) => profile.like, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'profileId' })
+  profile: Profile;
 
   @ManyToOne(() => Post, (post) => post.likes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'postId' })
   post: Post;
 
-  @Column({ type: 'uuid' })
-  userId: string;
-
-  @Column({ type: 'uuid' })
+  @Column()
   postId: string;
+
+  @Column()
+  profileId: string;
 
   @CreateDateColumn()
   createdAt: Date;

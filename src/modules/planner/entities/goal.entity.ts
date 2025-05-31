@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Plan } from './plan.entity';
 
 @Entity('goals')
 export class Goal {
@@ -6,11 +7,8 @@ export class Goal {
   id: string;
 
   @Column({ type: 'text' })
-  descricao: string;
+  description: string;
 
-  @Column({ default: false })
-  completed: boolean;
-
-  @Column({ type: 'timestamptz' })
-  endDate: Date;
+  @ManyToOne(() => Plan, (plan) => plan.goals, { onDelete: 'CASCADE' })
+  plan: Plan;
 }

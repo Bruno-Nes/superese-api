@@ -1,5 +1,13 @@
-import { User } from 'src/modules/user/entities/user.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Profile } from '@modules/user/entities/profile.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Goal } from './goal.entity';
 
 @Entity('plans')
 export class Plan {
@@ -7,14 +15,21 @@ export class Plan {
   id: string;
 
   @Column({ type: 'text' })
-  descricao: string;
+  description: string;
 
-  @Column({ type: 'timestamptz' })
-  initialDate: Date;
+  @Column()
+  duration: number;
 
-  @Column({ type: 'timestamptz' })
-  endDate: Date;
+  @Column()
+  progress: number;
 
-  @ManyToOne(() => User, (user) => user.plans)
-  user: User;
+  @Column({ default: false })
+  completed: boolean;
+
+  @ManyToOne(() => Profile, (profile) => profile.plans)
+  @JoinColumn({ name: 'profile_id' })
+  profile: Profile;
+
+  @OneToMany(() => Goal, (goal) => goal.plan, { cascade: true })
+  goals: Goal[];
 }

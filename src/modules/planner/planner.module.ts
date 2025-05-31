@@ -4,10 +4,15 @@ import { Goal } from './entities/goal.entity';
 import { Achievement } from './entities/achievement.entity';
 import { Medal } from './entities/medal.entity';
 import { Plan } from './entities/plan.entity';
+import { PlannerController } from './controllers/planner.controller';
+import { PlannerService } from './services/planner.service';
+import { Profile } from '@modules/user/entities/profile.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Goal, Achievement, Medal, Plan])],
-  controllers: [],
-  providers: [],
+  imports: [
+    TypeOrmModule.forFeature([Goal, Achievement, Medal, Plan, Profile]),
+  ],
+  controllers: [PlannerController],
+  providers: [PlannerService],
 })
-export class UserModule {}
+export class PlannerModule {}

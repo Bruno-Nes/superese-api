@@ -8,42 +8,40 @@ import {
   Delete,
   UseGuards,
   Request,
+  Req,
 } from '@nestjs/common';
-import { FolderService } from '../services/folder.service';
 import { CreateFolderDto } from '../dtos/create-folder.dto';
-import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { UpdateFolderDto } from '../dtos/update-folder.dto';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { AuthGuard } from '@modules/auth/guards/auth.guard';
+import { DiaryService } from '../services/diary.service';
 
 @ApiTags('Folders')
-@ApiBearerAuth()
 @Controller('folders')
-@UseGuards(JwtAuthGuard)
 export class FolderController {
-  constructor(private readonly folderService: FolderService) {}
+  constructor(private readonly diaryService: DiaryService) {}
 
   @Post()
   @ApiOperation({ summary: 'Cria uma nova pasta para o usuário autenticado' })
-  create(@Request() req, @Body() createFolderDto: CreateFolderDto) {
-    return this.folderService.create(req.user.id, createFolderDto);
+  @UseGuards(AuthGuard)
+  create(@Body() createFolderDto: CreateFolderDto, @Req() request: any) {
+    const firebaseUserId = request.user.uid;
+    return this.diaryService.create(firebaseUserId, createFolderDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Lista todas as pastas do usuário autenticado' })
   findAll(@Request() req) {
-    return this.folderService.findAll(req.user.id);
+    const firebaseUserId = req.user.uid;
+    return this.diaryService.findAllFolders(firebaseUserId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtém detalhes de uma pasta específica' })
   @ApiParam({ name: 'id', description: 'ID da pasta' })
   findOne(@Request() req, @Param('id') id: string) {
-    return this.folderService.findOne(id, req.user.id);
+    const firebaseUserId = req.user.uid;
+    return this.diaryService.findOne(id, firebaseUserId);
   }
 
   @Patch(':id')
@@ -54,13 +52,14 @@ export class FolderController {
     @Param('id') id: string,
     @Body() updateFolderDto: UpdateFolderDto,
   ) {
-    return this.folderService.update(id, req.user.id, updateFolderDto);
+    return this.diaryService.updateFolder(id, req.user.id, updateFolderDto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remove uma pasta do usuário autenticado' })
   @ApiParam({ name: 'id', description: 'ID da pasta' })
   remove(@Request() req, @Param('id') id: string) {
-    return this.folderService.remove(id, req.user.id);
+    const firebaseUserId = req.user.uid;
+    return this.diaryService.removeFolder(id, firebaseUserId);
   }
 }

@@ -13,6 +13,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Superese')
     .setDescription('API para persistencia de dados do App Superese')
+    .addBearerAuth()
     .setVersion('1.0')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
