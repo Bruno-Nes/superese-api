@@ -43,32 +43,18 @@ export class ForumService {
     if (!profile) {
       throw new Error('Profile not found!');
     }
-    const id = profile.id;
 
     const { limit, offset } = paginationQuery;
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
-    const lastUserPost = await this.postRepository
+    const posts = await this.postRepository
       .createQueryBuilder('post')
-      .where('post.profileId = :profileId', { profileId: id })
-      .andWhere('post.createdAt > :thirtyMinutesAgo', { thirtyMinutesAgo })
-      .leftJoinAndSelect('post.profile', 'profile')
-      .orderBy('post.createdAt', 'DESC')
-      .limit(1)
-      .getOne();
-
-    const lastPostId = lastUserPost ? lastUserPost.id : '';
-
-    const otherPosts = await this.postRepository
-      .createQueryBuilder('post')
-      .where('post.id != :postId', { postId: lastPostId })
       .leftJoinAndSelect('post.profile', 'profile')
       .orderBy('post.createdAt', 'DESC')
       .limit(limit)
       .offset(offset)
       .getMany();
 
-    return lastUserPost ? [lastUserPost, ...otherPosts] : otherPosts;
+    return posts;
   }
 
   async findPostById(id: string) {
