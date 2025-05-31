@@ -16,6 +16,7 @@ import { NewsService } from './services/news.service';
 import { Message } from './entities/message.entity';
 import { ChatGateway } from './chat-gateway/chat.gateway';
 import { MessageService } from './services/message.service';
+import { MessageController } from './controllers/message.controller';
 import { ConversationController } from './controllers/conversarion-history.controller';
 import { ConversationService } from './services/conversation-history.service';
 import { ConversationHistory } from './entities/conversation-history.entity';
@@ -40,6 +41,7 @@ import { ConversationHistory } from './entities/conversation-history.entity';
     FriendshipController,
     RecoveryStatusController,
     NewsController,
+    MessageController,
     ConversationController,
   ],
   providers: [

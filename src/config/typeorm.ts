@@ -38,7 +38,7 @@ const dataSourceOptions: TypeOrmModuleOptions = {
     Message,
   ],
   synchronize: false,
-  migrations: ['dist/*-migrations.js'],
+  migrations: ['dist/migrations/*-migrations.js', 'dist/src/migrations/*.js'],
   logging: false,
 };
 // extra: {

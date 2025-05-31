@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -39,5 +40,12 @@ export class PlannerController {
   @Patch(':planId/decrease')
   async decreaseProgress(@Param('planId') id: string) {
     await this.planService.decreaseProgress(id);
+  }
+
+  @Delete(':planId')
+  @HttpCode(HttpStatus.OK)
+  async deletePlan(@Param('planId') planId: string, @Request() request: any) {
+    const firebaseUserId = request.user.uid;
+    return await this.planService.deletePlan(planId, firebaseUserId);
   }
 }

@@ -180,14 +180,21 @@ export class FriendshipService {
     if (!requestedUser || !currenteUser) {
       throw new Error('Users data not found!');
     }
+    return await this.isFriend(requestedUser.id, currenteUser.id);
+  }
 
-    const result = await this.friendshipRepository.find({
-      where: {
-        addressee: { id: userId },
-        requester: { id: currenteUser.id },
+  async isFriend(userIdA: string, userIdB: string): Promise<boolean> {
+    const friendship = await this.friendshipRepository
+      .createQueryBuilder('friendship')
+      .where(
+        '(friendship.requester = :userA AND friendship.addressee = :userB) OR (friendship.requester = :userB AND friendship.addressee = :userA)',
+        { userA: userIdA, userB: userIdB },
+      )
+      .andWhere('friendship.status = :status', {
         status: FriendshipStatus.ACCEPTED,
-      },
-    });
-    return result.length > 0;
+      })
+      .getOne();
+
+    return !!friendship;
   }
 }
