@@ -45,6 +45,41 @@ export class UserService {
     return newUser;
   }
 
+  async createUserFromFirebase(
+    firebaseUid: string,
+    email: string,
+    displayName?: string,
+  ): Promise<Profile> {
+    try {
+      // Verifica se o usuário já existe no banco
+      const existingUser = await this.findUserByFirebaseUid(firebaseUid);
+      if (existingUser) {
+        return existingUser;
+      }
+
+      // Gera username anônimo se não tiver displayName
+      const username = displayName || this.gerarUsernameAnonimo();
+
+      // Cria o usuário no banco de dados local
+      const user = this.userRepository.create({
+        firebaseUid,
+        email,
+        username,
+        // Outros campos opcionais podem ser definidos posteriormente
+      });
+
+      const savedUser = await this.userRepository.save(user);
+
+      // Marca como primeira vez no sistema de recuperação
+      await this.recovery.markRelapse(firebaseUid);
+
+      return savedUser;
+    } catch (error) {
+      console.error('Erro ao criar usuário do Firebase:', error);
+      throw new Error(`Failed to create user from Firebase: ${error.message}`);
+    }
+  }
+
   async findUserByEmail(email: string): Promise<Profile> {
     return await this.userRepository.findOne({ where: { email } });
   }

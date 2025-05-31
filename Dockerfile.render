@@ -3,13 +3,13 @@ FROM node:20.12.2-alpine
 
 # Instalar dependências essenciais em uma única camada
 RUN apk add --no-cache dumb-init curl libc6-compat && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+  addgroup -g 1001 -S nodejs && \
+  adduser -S nestjs -u 1001
 
 # Configurar npm para resolver conflitos de dependências
 RUN npm config set legacy-peer-deps true && \
-    npm config set fund false && \
-    npm config set audit false
+  npm config set fund false && \
+  npm config set audit false
 
 # Definir variáveis de ambiente
 ENV NODE_ENV=production

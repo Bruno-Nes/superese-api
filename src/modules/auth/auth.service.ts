@@ -29,9 +29,28 @@ export class AuthService {
   }
 
   async login({ email, password }: LoginUserDTO) {
-    const { idToken, refreshToken, expiresIn } =
-      await this.firebaseService.signInWithEmailAndPassword(email, password);
-    return { idToken, refreshToken, expiresIn };
+    try {
+      const { idToken, refreshToken, expiresIn } =
+        await this.firebaseService.signInWithEmailAndPassword(email, password);
+      
+      // Verifica o token para obter dados do usuário
+      const decodedToken = await this.firebaseService.verifyIdToken(idToken);
+      
+      // Verifica se o usuário existe no banco local, se não existir, cria
+      let user = await this.usersService.findUserByFirebaseUid(decodedToken.uid);
+      if (!user) {
+        user = await this.usersService.createUserFromFirebase(
+          decodedToken.uid,
+          decodedToken.email,
+          decodedToken.name || decodedToken.email.split('@')[0]
+        );
+      }
+      
+      return { idToken, refreshToken, expiresIn, user };
+    } catch (error) {
+      console.error('Erro no login:', error);
+      throw error; // Propaga o erro original do Firebase ou do banco
+    }
   }
 
   async logout(token: string) {

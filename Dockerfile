@@ -3,17 +3,17 @@ FROM node:20.12.2-alpine
 
 # Instalar dependências essenciais e criar usuário em uma única camada
 RUN apk add --no-cache --update dumb-init curl && \
-    apk upgrade && \
-    npm config set legacy-peer-deps true && \
-    npm config set fund false && \
-    npm config set audit false && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+  apk upgrade && \
+  npm config set legacy-peer-deps true && \
+  npm config set fund false && \
+  npm config set audit false && \
+  addgroup -g 1001 -S nodejs && \
+  adduser -S nestjs -u 1001
 
 # Definir variáveis de ambiente otimizadas
 ENV NODE_ENV=production \
-    PORT=3000 \
-    NODE_OPTIONS="--max-old-space-size=512"
+  PORT=3000 \
+  NODE_OPTIONS="--max-old-space-size=512"
 
 WORKDIR /app
 
@@ -29,9 +29,9 @@ COPY src ./src
 
 # Build da aplicação e limpeza em uma única camada
 RUN npm run build && \
-    npm prune --production && \
-    rm -rf src tsconfig*.json node_modules/.cache /tmp/* /var/tmp/* && \
-    npm cache clean --force
+  npm prune --production && \
+  rm -rf src tsconfig*.json node_modules/.cache /tmp/* /var/tmp/* && \
+  npm cache clean --force
 
 # Configurar permissões e usuário
 RUN chown -R nestjs:nodejs /app
