@@ -9,6 +9,7 @@ import { FirebaseModule } from './modules/firebase/firebase.module';
 import { AuthGuard } from '@modules/auth/guards/auth.guard';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PlannerModule } from '@modules/planner/planner.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { PlannerModule } from '@modules/planner/planner.module';
     FirebaseModule,
     PlannerModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [
     {
       provide: 'APP_GUARD',
