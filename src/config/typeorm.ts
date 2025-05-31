@@ -40,12 +40,12 @@ const dataSourceOptions: TypeOrmModuleOptions = {
   synchronize: false,
   migrations: ['dist/migrations/*-migrations.js', 'dist/src/migrations/*.js'],
   logging: false,
+  extra: {
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  },
 };
-// extra: {
-//   ssl: {
-//     rejectUnauthorized: false,
-//   },
-// },
 
 export const AppDataSource = new DataSource(
   dataSourceOptions as DataSourceOptions,
