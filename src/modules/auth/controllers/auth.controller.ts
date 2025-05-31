@@ -1,22 +1,36 @@
 import {
+  Body,
   Controller,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
-  Request,
-  UseGuards,
 } from '@nestjs/common';
-import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { AuthService } from '../auth.service';
+import { LoginDTO } from '@modules/user/dtos/login.dto';
+import { Public } from 'src/lib/decorators/public-route.decorators';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  private logger: Logger;
+  constructor(private authService: AuthService) {
+    this.logger = new Logger(AuthController.name);
+  }
 
   @Post()
+  @Public()
   @HttpCode(HttpStatus.OK)
-  @UseGuards(LocalAuthGuard)
-  async login(@Request() req: any) {
-    return this.authService.login(req.user);
+  async login(@Body() request: LoginDTO) {
+    return this.authService.login(request);
   }
+
+  // @Get('google')
+  // @UseGuards(AuthGuard('google'))
+  // async googleAuth(@Req() req) {}
+
+  // @Get('google/callback')
+  // @UseGuards(AuthGuard('google'))
+  // async googleAuthRedirect(@Req() req) {
+  //   return req.user;
+  // }
 }
