@@ -22,21 +22,22 @@ export class AuthController {
   @Post()
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Login do usuário',
-    description: 'Realiza login e cria automaticamente o usuário no banco se não existir'
+    description:
+      'Realiza login e cria automaticamente o usuário no banco se não existir',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Login realizado com sucesso',
     schema: {
       properties: {
         idToken: { type: 'string' },
         refreshToken: { type: 'string' },
         expiresIn: { type: 'string' },
-        user: { type: 'object' }
-      }
-    }
+        user: { type: 'object' },
+      },
+    },
   })
   async login(@Body() request: LoginUserDTO) {
     return this.authService.login(request);

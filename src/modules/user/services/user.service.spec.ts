@@ -43,7 +43,9 @@ describe('UserService - createUserFromFirebase', () => {
     }).compile();
 
     service = module.get<UserService>(UserService);
-    userRepository = module.get<Repository<Profile>>(getRepositoryToken(Profile));
+    userRepository = module.get<Repository<Profile>>(
+      getRepositoryToken(Profile),
+    );
     recoveryService = module.get<RecoveryStatusService>(RecoveryStatusService);
   });
 
@@ -82,7 +84,7 @@ describe('UserService - createUserFromFirebase', () => {
       const firebaseUid = 'test-firebase-uid';
       const email = 'test@example.com';
       const displayName = 'TestUser';
-      
+
       const newUser = {
         firebaseUid,
         email,
@@ -100,7 +102,11 @@ describe('UserService - createUserFromFirebase', () => {
       mockRecoveryService.markRelapse.mockResolvedValue(undefined);
 
       // Act
-      const result = await service.createUserFromFirebase(firebaseUid, email, displayName);
+      const result = await service.createUserFromFirebase(
+        firebaseUid,
+        email,
+        displayName,
+      );
 
       // Assert
       expect(result).toBe(savedUser);
@@ -120,10 +126,12 @@ describe('UserService - createUserFromFirebase', () => {
       // Arrange
       const firebaseUid = 'test-firebase-uid';
       const email = 'test@example.com';
-      
+
       mockUserRepository.findOne.mockResolvedValue(null);
       mockUserRepository.create.mockImplementation((data) => data);
-      mockUserRepository.save.mockImplementation((user) => Promise.resolve({ id: 'new-id', ...user }));
+      mockUserRepository.save.mockImplementation((user) =>
+        Promise.resolve({ id: 'new-id', ...user }),
+      );
       mockRecoveryService.markRelapse.mockResolvedValue(undefined);
 
       // Spy on gerarUsernameAnonimo method
@@ -146,12 +154,12 @@ describe('UserService - createUserFromFirebase', () => {
       // Arrange
       const firebaseUid = 'test-firebase-uid';
       const email = 'test@example.com';
-      
+
       mockUserRepository.findOne.mockRejectedValue(new Error('Database error'));
 
       // Act & Assert
       await expect(
-        service.createUserFromFirebase(firebaseUid, email)
+        service.createUserFromFirebase(firebaseUid, email),
       ).rejects.toThrow('Failed to create user from Firebase: Database error');
     });
   });

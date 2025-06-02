@@ -7,6 +7,7 @@ Foi implementada uma funcionalidade que **automaticamente cria usuários no banc
 ## 🚀 Como Funciona
 
 ### 1. **Fluxo do Login**
+
 ```typescript
 POST /auth
 {
@@ -16,16 +17,18 @@ POST /auth
 ```
 
 ### 2. **Processo Automático**
+
 1. ✅ **Firebase Authentication** - Valida credenciais
 2. ✅ **Verificação Local** - Verifica se usuário existe no banco
 3. ✅ **Criação Automática** - Se não existir, cria automaticamente
 4. ✅ **Retorno Completo** - Retorna tokens + dados do usuário
 
 ### 3. **Resposta do Login**
+
 ```json
 {
   "idToken": "firebase-id-token",
-  "refreshToken": "firebase-refresh-token", 
+  "refreshToken": "firebase-refresh-token",
   "expiresIn": "3600",
   "user": {
     "id": "uuid-gerado",
@@ -43,13 +46,14 @@ POST /auth
 
 ```typescript
 async createUserFromFirebase(
-  firebaseUid: string, 
-  email: string, 
+  firebaseUid: string,
+  email: string,
   displayName?: string
 ): Promise<Profile>
 ```
 
 **Características:**
+
 - ✅ Não chama Firebase (usuário já existe lá)
 - ✅ Gera username automático se não fornecido
 - ✅ Cria registro no banco PostgreSQL
@@ -61,12 +65,12 @@ async createUserFromFirebase(
 ```typescript
 async login({ email, password }: LoginUserDTO) {
   // 1. Autentica no Firebase
-  const { idToken, refreshToken, expiresIn } = 
+  const { idToken, refreshToken, expiresIn } =
     await this.firebaseService.signInWithEmailAndPassword(email, password);
-  
+
   // 2. Decodifica token para obter dados
   const decodedToken = await this.firebaseService.verifyIdToken(idToken);
-  
+
   // 3. Verifica/cria usuário no banco local
   let user = await this.usersService.findUserByFirebaseUid(decodedToken.uid);
   if (!user) {
@@ -76,7 +80,7 @@ async login({ email, password }: LoginUserDTO) {
       decodedToken.name || decodedToken.email.split('@')[0]
     );
   }
-  
+
   return { idToken, refreshToken, expiresIn, user };
 }
 ```
@@ -84,11 +88,13 @@ async login({ email, password }: LoginUserDTO) {
 ## 🎯 Benefícios
 
 ### **Para Desenvolvedores**
+
 - ✅ **Sincronização Automática** - Firebase ↔ Banco Local
 - ✅ **Menos Código** - Não precisa criar usuários manualmente
 - ✅ **Consistência** - Sempre há um usuário no banco após login
 
 ### **Para Usuários**
+
 - ✅ **Login Transparente** - Funciona independente de ser primeiro login
 - ✅ **Username Automático** - Gera nomes únicos automaticamente
 - ✅ **Perfil Imediato** - Usuário já pode usar todas as funcionalidades
@@ -102,11 +108,13 @@ O sistema gera usernames únicos automaticamente usando:
 ```
 
 **Exemplos:**
+
 - `AstutoLeao123`
-- `MisteriosoTigre456` 
+- `MisteriosoTigre456`
 - `CriatovoOceano789`
 
 **Arrays Disponíveis:**
+
 - **50 Adjetivos** - Anonimo, Misterioso, Valente, etc.
 - **50 Substantivos** - Leão, Tigre, Oceano, etc.
 - **Números** - 0-999 aleatório
@@ -114,12 +122,14 @@ O sistema gera usernames únicos automaticamente usando:
 ## 🔒 Segurança
 
 ### **Validações Implementadas**
+
 - ✅ **Firebase Token** - Sempre valida token antes de criar
 - ✅ **Email Único** - Evita duplicação por email
 - ✅ **FirebaseUID Único** - Evita duplicação por UID
 - ✅ **Tratamento de Erros** - Logs detalhados para debug
 
 ### **Fluxo Seguro**
+
 1. **Autenticação Firebase** ← Primeiro valida credenciais
 2. **Verificação Token** ← Confirma token válido
 3. **Criação Controlada** ← Só cria se não existir
@@ -128,6 +138,7 @@ O sistema gera usernames únicos automaticamente usando:
 ## 🧪 Testando a Funcionalidade
 
 ### **Cenário 1: Usuário Novo**
+
 ```bash
 # Primeiro login - Usuário será criado automaticamente
 curl -X POST http://localhost:3000/auth \
@@ -139,12 +150,13 @@ curl -X POST http://localhost:3000/auth \
 ```
 
 ### **Cenário 2: Usuário Existente**
+
 ```bash
 # Segundo login - Usuário já existe, retorna dados
 curl -X POST http://localhost:3000/auth \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "existente@usuario.com", 
+    "email": "existente@usuario.com",
     "password": "senha123"
   }'
 ```
@@ -163,12 +175,14 @@ O sistema registra logs detalhados:
 ## 🔄 Integração com Sistema Existente
 
 ### **Módulos Afetados**
+
 - ✅ **AuthService** - Login atualizado
 - ✅ **UserService** - Nova função de criação
 - ✅ **AuthController** - Documentação atualizada
 - ✅ **RecoveryStatusService** - Inicialização automática
 
 ### **Compatibilidade**
+
 - ✅ **Função createUser original** - Mantida intacta
 - ✅ **APIs existentes** - Não foram alteradas
 - ✅ **Frontend** - Compatível sem mudanças
@@ -177,6 +191,7 @@ O sistema registra logs detalhados:
 ## 🚀 Deploy Ready
 
 Esta funcionalidade está pronta para produção:
+
 - ✅ **Tratamento de Erros** - Robusto e detalhado
 - ✅ **Performance** - Verificação eficiente de existência
 - ✅ **Logs** - Monitoramento completo

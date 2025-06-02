@@ -6,6 +6,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { FirebaseConfigService } from './firebase-config.service';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 
 @Injectable()
 export class FirebaseService {
@@ -15,7 +16,7 @@ export class FirebaseService {
     this.apiKey = firebaseConfig.apiKey;
   }
 
-  async createUser(props: CreateRequest): Promise<any> {
+  async createUser(props: CreateRequest): Promise<UserRecord> {
     return (await firebaseAdmin
       .auth()
       .createUser(props)
@@ -25,6 +26,7 @@ export class FirebaseService {
   async setCustomUserClaims(uid: string, claims: Record<string, any>) {
     return await firebaseAdmin.auth().setCustomUserClaims(uid, claims);
   }
+  
 
   async verifyIdToken(
     token: string,

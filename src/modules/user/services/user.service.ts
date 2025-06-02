@@ -6,6 +6,7 @@ import { CreateUserDTO } from '../dtos/create-user.dto';
 import { FirebaseService } from '@modules/firebase/firebase.service';
 import { RecoveryStatusService } from '@modules/user/services/recovery-status.service';
 import { UpdateProfileDto } from '../dtos/update-user.dto';
+import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 
 @Injectable()
 export class UserService {
@@ -29,7 +30,7 @@ export class UserService {
       input.username = this.gerarUsernameAnonimo();
     }
 
-    const newUser = await this.firebaseService.createUser({
+    const newUser: UserRecord = await this.firebaseService.createUser({
       email: input.email,
       password: input.password,
     });
