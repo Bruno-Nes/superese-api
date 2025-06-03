@@ -50,6 +50,7 @@ export class UserService {
     firebaseUid: string,
     email: string,
     displayName?: string,
+    photoURL?: string,
   ): Promise<Profile> {
     try {
       // Verifica se o usuário já existe no banco
@@ -66,6 +67,7 @@ export class UserService {
         firebaseUid,
         email,
         username,
+        avatar: photoURL,
         // Outros campos opcionais podem ser definidos posteriormente
       });
 
@@ -81,12 +83,63 @@ export class UserService {
     }
   }
 
+  async createUserFromGoogle(
+    googleUid: string,
+    email: string,
+    displayName?: string,
+    photoURL?: string,
+  ): Promise<Profile> {
+    try {
+      // Verifica se o usuário já existe no banco pelo googleUid
+      const existingUser = await this.findUserByGoogleUid(googleUid);
+      if (existingUser) {
+        return existingUser;
+      }
+
+      // Gera username baseado no displayName ou email
+      const username =
+        displayName || email.split('@')[0] || this.gerarUsernameAnonimo();
+
+      // Separa primeiro e último nome se displayName existir
+      let firstName: string, lastName: string;
+      if (displayName) {
+        const nameParts = displayName.split(' ');
+        firstName = nameParts[0];
+        lastName = nameParts.slice(1).join(' ') || undefined;
+      }
+
+      // Cria o usuário no banco de dados local
+      const user = this.userRepository.create({
+        googleUid,
+        email,
+        username,
+        firstName,
+        lastName,
+        avatar: photoURL,
+      });
+
+      const savedUser = await this.userRepository.save(user);
+
+      // Marca como primeira vez no sistema de recuperação
+      await this.recovery.markRelapse(googleUid);
+
+      return savedUser;
+    } catch (error) {
+      console.error('Erro ao criar usuário do Google:', error);
+      throw new Error(`Failed to create user from Google: ${error.message}`);
+    }
+  }
+
   async findUserByEmail(email: string): Promise<Profile> {
     return await this.userRepository.findOne({ where: { email } });
   }
 
   async findUserByFirebaseUid(id: string): Promise<Profile> {
     return await this.userRepository.findOne({ where: { firebaseUid: id } });
+  }
+
+  async findUserByGoogleUid(googleUid: string): Promise<Profile> {
+    return await this.userRepository.findOne({ where: { googleUid } });
   }
 
   async findByIdOrThrow(profileId: string) {

@@ -76,7 +76,7 @@ export class AuthService {
           googleLoginData.idToken,
         );
 
-        this.logger.log(
+      this.logger.log(
         `Firebase response: ${firebaseResponse.idToken}, ${firebaseResponse.refreshToken}, ${firebaseResponse.expiresIn}`,
       );
 
@@ -105,7 +105,7 @@ export class AuthService {
 
       if (!user) {
         // Se não existir, cria o usuário no banco local
-        user = await this.usersService.createUserFromFirebase(
+        user = await this.usersService.createUserFromGoogle(
           decodedToken.uid,
           decodedToken.email,
           decodedToken.name ||

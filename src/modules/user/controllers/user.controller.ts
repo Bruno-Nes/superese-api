@@ -11,7 +11,6 @@ import {
   Request,
   Param,
   UseGuards,
-  Put,
   UploadedFile,
   Patch,
 } from '@nestjs/common';
