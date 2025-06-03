@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEmail, IsDateString } from 'class-validator';
+import { IsOptional, IsString, IsEmail, IsDateString, IsBoolean } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -28,4 +28,10 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   phoneNumber?: string;
+
+    @IsOptional()
+    @IsBoolean({
+      message: 'isPrivate must be a boolean value',
+    })
+    isPrivate?: boolean;
 }

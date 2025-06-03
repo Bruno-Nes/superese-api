@@ -45,13 +45,12 @@ export class ForumService {
     }
 
     const { limit, offset } = paginationQuery;
+    console.log('Finding posts with limit:', limit, 'and offset:', offset);
 
     const posts = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.profile', 'profile')
       .orderBy('post.createdAt', 'DESC')
-      .limit(limit)
-      .offset(offset)
       .getMany();
 
     return posts;

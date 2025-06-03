@@ -1,18 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { Comment } from '@modules/forum/entities/comment.entity';
-import { Like } from '@modules/forum/entities/like.entity';
-import { Post } from '@modules/forum/entities/post.entity';
-import { Diary } from '@modules/diary/entities/diary.entity';
-import { Folder } from '@modules/diary/entities/folder.entity';
-import { Achievement } from '@modules/planner/entities/achievement.entity';
-import { Goal } from '@modules/planner/entities/goal.entity';
-import { Medal } from '@modules/planner/entities/medal.entity';
-import { Plan } from '@modules/planner/entities/plan.entity';
-import { Friendship } from '@modules/user/entities/friendship.entity';
-import { Profile } from '@modules/user/entities/profile.entity';
-import { RecoveryStatus } from '@modules/user/entities/recovery-status.entity';
-import { Message } from '@modules/user/entities/message.entity';
-import { ConversationHistory } from '@modules/user/entities/conversation-history.entity';
+import { getDatabaseOptimizationConfig } from './database-optimization.config';
 
 export const getDatabaseConfig = (): TypeOrmModuleOptions => {
   const databaseUrl = process.env.DATABASE_URL;
@@ -28,42 +15,27 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
     urlStart: databaseUrl.substring(0, 20) + '...',
   });
 
-  const config: TypeOrmModuleOptions = {
+  const baseConfig: TypeOrmModuleOptions = {
     type: 'postgres',
     url: databaseUrl,
-    entities: [
-      Profile,
-      Friendship,
-      Comment,
-      Like,
-      Post,
-      Diary,
-      Folder,
-      Achievement,
-      ConversationHistory,
-      Goal,
-      Medal,
-      Plan,
-      RecoveryStatus,
-      Message,
-    ],
+    // Use autoLoadEntities to avoid entity conflicts and reduce serialization time
+    autoLoadEntities: true,
     synchronize: false,
     migrations: ['dist/migrations/*-migrations.js', 'dist/src/migrations/*.js'],
-    logging: !isProduction,
+    logging: isProduction ? ['error', 'warn'] : false,
     retryAttempts: isProduction ? 10 : 3,
     retryDelay: isProduction ? 3000 : 1000,
-    autoLoadEntities: true,
     extra: {
-      ssl: isProduction
-        ? {
-            rejectUnauthorized: false,
-          }
-        : false,
-      connectionTimeoutMillis: 30000,
-      max: isProduction ? 10 : 5,
-      min: 2,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+      // Basic connection settings
+      connectionTimeoutMillis: 15000,
+      max: isProduction ? 20 : 10,
+      min: isProduction ? 5 : 2,
     },
   };
 
-  return config;
+  // Apply optimization configuration for production
+  return isProduction ? getDatabaseOptimizationConfig(baseConfig) : baseConfig;
 };

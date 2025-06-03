@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEmail,
   IsNotEmpty,
   IsOptional,
@@ -78,4 +79,15 @@ export class CreateUserDTO {
     required: false,
   })
   gender?: string;
+
+  @IsOptional()
+  @IsBoolean({
+    message: 'isPrivate must be a boolean value',
+  })
+  @ApiProperty({
+    example: false,
+    description: 'Indica se o usuário é privado (opcional)',
+    required: false,
+  })
+  isPrivate?: boolean;
 }

@@ -24,7 +24,6 @@ import { HealthController } from './health.controller';
     DatabaseModule,
     DiaryModule,
     ForumModule,
-    FirebaseModule,
     PlannerModule,
   ],
   controllers: [HealthController],

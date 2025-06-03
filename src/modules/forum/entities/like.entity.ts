@@ -4,7 +4,6 @@ import {
   ManyToOne,
   CreateDateColumn,
   Unique,
-  OneToOne,
   JoinColumn,
   Column,
 } from 'typeorm';
@@ -17,7 +16,7 @@ export class Like {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Profile, (profile) => profile.like, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Profile, (profile) => profile.likes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'profileId' })
   profile: Profile;
 

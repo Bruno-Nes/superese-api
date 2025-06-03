@@ -5,7 +5,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-  OneToOne,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { Post } from 'src/modules/forum/entities/post.entity';
@@ -57,46 +56,67 @@ export class Profile {
   @Column({ length: 10, nullable: true })
   gender?: string;
 
-  @OneToMany(() => Friendship, (friendship) => friendship.requester)
-  sentFriendRequests: Friendship[];
+  @OneToMany(() => Friendship, (friendship) => friendship.requester, {
+    lazy: true,
+  })
+  sentFriendRequests: Promise<Friendship[]>;
 
-  @OneToMany(() => Friendship, (friendship) => friendship.addressee)
-  receivedFriendRequests: Friendship[];
+  @OneToMany(() => Friendship, (friendship) => friendship.addressee, {
+    lazy: true,
+  })
+  receivedFriendRequests: Promise<Friendship[]>;
 
-  @OneToMany(() => Post, (post) => post.profile)
-  posts: Post[];
+  @OneToMany(() => Post, (post) => post.profile, {
+    lazy: true,
+  })
+  posts: Promise<Post[]>;
 
-  @OneToMany(() => ConversationHistory, (conv) => conv.profile)
-  conversarionHistory: ConversationHistory[];
+  @OneToMany(() => ConversationHistory, (conv) => conv.profile, {
+    lazy: true,
+  })
+  conversarionHistory: Promise<ConversationHistory[]>;
 
   @OneToMany(() => RecoveryStatus, (status) => status.profile, {
     cascade: true,
   })
   recoveryStatuses: RecoveryStatus[];
 
+  @Column({ default: false })
+  isPrivate: boolean;
+
   @Column('decimal', { nullable: true, precision: 10, scale: 2 })
   averageBettingExpensePerWeek: number | null;
 
-  @OneToMany(() => Folder, (folder) => folder.profile)
-  folders: Folder[];
+  @OneToMany(() => Folder, (folder) => folder.profile, {
+    lazy: true,
+  })
+  folders: Promise<Folder[]>;
 
-  @OneToMany(() => Plan, (plan) => plan.profile)
-  plans: Plan[];
+  @OneToMany(() => Plan, (plan) => plan.profile, {
+    lazy: true,
+  })
+  plans: Promise<Plan[]>;
 
-  @OneToMany(() => Achievement, (achievement) => achievement.profile)
-  achievements: Achievement[];
+  @OneToMany(() => Achievement, (achievement) => achievement.profile, {
+    lazy: true,
+  })
+  achievements: Promise<Achievement[]>;
 
-  @OneToOne(() => Comment, (comment) => comment.profile)
+  @OneToMany(() => Comment, (comment) => comment.profile)
   comments: Comment[];
 
-  @OneToOne(() => Like, (like) => like.profile)
-  like: Like;
+  @OneToMany(() => Like, (like) => like.profile)
+  likes: Like[];
 
-  @OneToMany(() => Message, (message) => message.sender)
-  sentMessages: Message[];
+  @OneToMany(() => Message, (message) => message.sender, {
+    lazy: true,
+  })
+  sentMessages: Promise<Message[]>;
 
-  @OneToMany(() => Message, (message) => message.receiver)
-  receivedMessages: Message[];
+  @OneToMany(() => Message, (message) => message.receiver, {
+    lazy: true,
+  })
+  receivedMessages: Promise<Message[]>;
 
   @CreateDateColumn()
   createdAt: Date;
