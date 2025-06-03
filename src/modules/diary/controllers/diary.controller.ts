@@ -44,20 +44,16 @@ export class DiaryController {
   @ApiOperation({ summary: 'Obtém um diário específico dentro de uma pasta' })
   @ApiParam({ name: 'folderId', description: 'ID da pasta' })
   @ApiParam({ name: 'id', description: 'ID do diário' })
-  findOne(@Param('folderId') folderId: string, @Param('id') id: string) {
-    return this.diariesService.findOne(id, folderId);
+  findOne(@Param('id') id: string) {
+    return this.diariesService.findOne(id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Atualiza um diário dentro de uma pasta' })
   @ApiParam({ name: 'folderId', description: 'ID da pasta' })
   @ApiParam({ name: 'id', description: 'ID do diário' })
-  update(
-    @Param('folderId') folderId: string,
-    @Param('id') id: string,
-    @Body() updateDiaryDto: UpdateDiaryDto,
-  ) {
-    return this.diariesService.update(id, folderId, updateDiaryDto);
+  update(@Param('id') id: string, @Body() updateDiaryDto: UpdateDiaryDto) {
+    return this.diariesService.update(id, updateDiaryDto);
   }
 
   @Delete(':id')

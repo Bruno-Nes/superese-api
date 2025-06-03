@@ -26,7 +26,6 @@ export class FirebaseService {
   async setCustomUserClaims(uid: string, claims: Record<string, any>) {
     return await firebaseAdmin.auth().setCustomUserClaims(uid, claims);
   }
-  
 
   async verifyIdToken(
     token: string,
@@ -67,6 +66,44 @@ export class FirebaseService {
       refreshToken: newRefreshToken,
       expiresIn,
     };
+  }
+
+  async signInWithGoogleIdToken(idToken: string) {
+    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${this.apiKey}`;
+    return await this.sendPostRequest(url, {
+      postBody: `id_token=${idToken}&providerId=google.com`,
+      requestUri: 'http://localhost',
+      returnIdpCredential: true,
+      returnSecureToken: true,
+    }).catch(this.handleRestApiError);
+  }
+
+  async getUserByGoogleUid(googleUid: string): Promise<UserRecord | null> {
+    try {
+      return await firebaseAdmin.auth().getUser(googleUid);
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        return null;
+      }
+      throw this.handleFirebaseAuthError(error);
+    }
+  }
+
+  async createUserFromGoogleData(googleData: {
+    uid: string;
+    email: string;
+    displayName?: string;
+    photoURL?: string;
+  }): Promise<UserRecord> {
+    const createRequest: CreateRequest = {
+      uid: googleData.uid,
+      email: googleData.email,
+      emailVerified: true,
+      displayName: googleData.displayName,
+      photoURL: googleData.photoURL,
+    };
+
+    return await this.createUser(createRequest);
   }
 
   private async sendRefreshAuthTokenRequest(refreshToken: string) {

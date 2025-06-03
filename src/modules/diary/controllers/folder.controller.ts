@@ -41,7 +41,7 @@ export class FolderController {
   @ApiParam({ name: 'id', description: 'ID da pasta' })
   findOne(@Request() req, @Param('id') id: string) {
     const firebaseUserId = req.user.uid;
-    return this.diaryService.findOne(id, firebaseUserId);
+    return this.diaryService.findOneFolder(id, firebaseUserId);
   }
 
   @Patch(':id')

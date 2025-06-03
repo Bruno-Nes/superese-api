@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import { LoginUserDTO } from '../dtos/login-user.dto';
+import { GoogleLoginDTO } from '../dtos/google-login.dto';
 import { Public } from 'src/lib/decorators/public-route.decorators';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -43,13 +44,26 @@ export class AuthController {
     return this.authService.login(request);
   }
 
-  // @Get('google')
-  // @UseGuards(AuthGuard('google'))
-  // async googleAuth(@Req() req) {}
-
-  // @Get('google/callback')
-  // @UseGuards(AuthGuard('google'))
-  // async googleAuthRedirect(@Req() req) {
-  //   return req.user;
-  // }
+  @Post('google')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Login com Google',
+    description:
+      'Realiza login com Google OAuth e cria automaticamente o usuário no banco se não existir',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Login com Google realizado com sucesso',
+    schema: {
+      properties: {
+        accessToken: { type: 'string' },
+        user: { type: 'object' },
+        provider: { type: 'string', example: 'google' },
+      },
+    },
+  })
+  async googleLogin(@Body() request: GoogleLoginDTO) {
+    return this.authService.googleLogin(request);
+  }
 }

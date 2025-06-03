@@ -22,9 +22,11 @@ export class Folder {
     onDelete: 'CASCADE',
   })
   profile: Profile;
-
-  @OneToMany(() => Diary, (diary) => diary.folder, { cascade: true })
-  diaries: Diary[];
+  @OneToMany(() => Diary, (diary) => diary.folder, {
+    cascade: true,
+    lazy: true,
+  })
+  diaries: Promise<Diary[]>;
 
   @CreateDateColumn()
   createdAt: Date;

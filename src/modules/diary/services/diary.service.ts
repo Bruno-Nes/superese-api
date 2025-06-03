@@ -75,7 +75,7 @@ export class DiaryService {
     profileId: string,
     updateFolderDto: UpdateFolderDto,
   ): Promise<Folder> {
-    const folder = await this.findOne(id, profileId);
+    const folder = await this.findOneFolder(id, profileId);
     Object.assign(folder, updateFolderDto);
     return this.folderRepository.save(folder);
   }
@@ -117,9 +117,9 @@ export class DiaryService {
     return this.diaryRepository.find({ where: { folder: { id: folderId } } });
   }
 
-  async findOne(id: string, folderId: string): Promise<Diary> {
+  async findOne(id: string): Promise<Diary> {
     const diary = await this.diaryRepository.findOne({
-      where: { id, folder: { id: folderId } },
+      where: { id },
     });
     if (!diary) {
       throw new NotFoundException('Diary not found');
@@ -127,12 +127,8 @@ export class DiaryService {
     return diary;
   }
 
-  async update(
-    id: string,
-    folderId: string,
-    updateDiaryDto: UpdateDiaryDto,
-  ): Promise<Diary> {
-    const diary = await this.findOne(id, folderId);
+  async update(id: string, updateDiaryDto: UpdateDiaryDto): Promise<Diary> {
+    const diary = await this.findOne(id);
     Object.assign(diary, updateDiaryDto);
     return (await this.diaryRepository.insert(diary)).raw;
   }
