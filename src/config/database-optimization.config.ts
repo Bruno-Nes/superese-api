@@ -8,9 +8,25 @@ export const getDatabaseOptimizationConfig = (
   baseConfig: TypeOrmModuleOptions,
 ): TypeOrmModuleOptions => {
   const isProduction = process.env.NODE_ENV === 'production';
+  const hasRedis = process.env.REDIS_HOST && process.env.REDIS_PORT;
 
-  return {
+  // Build the configuration with conditional cache
+  const cacheConfig = hasRedis
+    ? {
+        cache: {
+          duration: 30000, // 30 seconds
+          type: 'redis' as any,
+          options: {
+            host: process.env.REDIS_HOST,
+            port: parseInt(process.env.REDIS_PORT as string),
+          },
+        },
+      }
+    : {};
+
+  const optimizedConfig: TypeOrmModuleOptions = {
     ...baseConfig,
+    ...cacheConfig,
     // Performance optimizations
     extra: {
       ...baseConfig.extra,
@@ -39,16 +55,6 @@ export const getDatabaseOptimizationConfig = (
     // Logging optimization
     logging: isProduction ? ['error', 'warn', 'migration'] : false,
 
-    // Cache optimization
-    cache: {
-      duration: 30000, // 30 seconds
-      type: 'redis' as any, // Use Redis if available, fallback to memory
-      options: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-      },
-    },
-
     // Entity loading optimization
     dropSchema: false,
     migrationsRun: false,
@@ -56,4 +62,6 @@ export const getDatabaseOptimizationConfig = (
     // Connection optimization
     maxQueryExecutionTime: 5000, // Log slow queries
   };
+
+  return optimizedConfig;
 };
