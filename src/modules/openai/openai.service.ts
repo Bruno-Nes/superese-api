@@ -14,14 +14,15 @@ export class OpenAIService {
         model: 'gpt-3.5-turbo',
         store: true,
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.9,
-        max_tokens: 100,
+        temperature: 0.7,
+        max_tokens: 800,
       });
       this.logger.debug(completion);
-      const frase = completion.choices[0].message.content.trim();
-      return frase;
+      const response = completion.choices[0].message.content?.trim() || '';
+      return response;
     } catch (error) {
-      throw new Error(error);
+      this.logger.error('OpenAI API Error:', error);
+      throw new Error(`Erro na consulta ao OpenAI: ${error.message}`);
     }
   }
 }

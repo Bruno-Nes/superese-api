@@ -20,6 +20,9 @@ import { MessageController } from './controllers/message.controller';
 import { ConversationController } from './controllers/conversarion-history.controller';
 import { ConversationService } from './services/conversation-history.service';
 import { ConversationHistory } from './entities/conversation-history.entity';
+import { GPTConsultationService } from './services/gpt-consultation.service';
+import { GPTConsultationController } from './controllers/gpt-consultation.controller';
+import { PlannerModule } from '../planner/planner.module';
 
 @Module({
   imports: [
@@ -35,6 +38,7 @@ import { ConversationHistory } from './entities/conversation-history.entity';
       signOptions: { expiresIn: '1d' },
     }),
     OpenAIModule.forRoot(),
+    PlannerModule,
   ],
   controllers: [
     UserController,
@@ -43,6 +47,7 @@ import { ConversationHistory } from './entities/conversation-history.entity';
     NewsController,
     MessageController,
     ConversationController,
+    GPTConsultationController,
   ],
   providers: [
     UserService,
@@ -52,6 +57,7 @@ import { ConversationHistory } from './entities/conversation-history.entity';
     ChatGateway,
     MessageService,
     ConversationService,
+    GPTConsultationService,
   ],
   exports: [UserService],
 })

@@ -14,5 +14,6 @@ import { Profile } from '@modules/user/entities/profile.entity';
   ],
   controllers: [PlannerController],
   providers: [PlannerService],
+  exports: [PlannerService],
 })
 export class PlannerModule {}

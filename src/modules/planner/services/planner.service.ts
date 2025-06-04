@@ -44,12 +44,11 @@ export class PlannerService {
     const savedPlan = await this.planRepository.save(plan);
 
     const newGoals = goals.map((goal) => {
-      if (typeof goal !== 'string') {
-        throw new Error('Goal must be a string');
-      }
-
+      // Handle both string and CreateGoalDTO formats
+      const description = typeof goal === 'string' ? goal : goal.description;
+      
       return {
-        description: goal,
+        description,
       };
     });
 
