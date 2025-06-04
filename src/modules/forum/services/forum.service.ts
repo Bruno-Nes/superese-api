@@ -13,6 +13,12 @@ import { Like } from '../entities/like.entity';
 import { Comment } from '../entities/comment.entity';
 import { CommentPostDTO } from '../dtos/create-comment.dto';
 import { Profile } from '@modules/user/entities/profile.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  PostLikedEvent,
+  CommentCreatedEvent,
+  ReplyCreatedEvent,
+} from '@modules/notification/events/notification.events';
 
 @Injectable()
 export class ForumService {
@@ -24,6 +30,7 @@ export class ForumService {
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
     private readonly userService: UserService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(post: CreatePostDTO, firebaseUid: string) {
@@ -85,6 +92,7 @@ export class ForumService {
     if (comment.parentCommentId) {
       parentComment = await this.commentRepository.findOne({
         where: { id: comment.parentCommentId },
+        relations: ['profile'],
       });
       if (!parentComment)
         throw new NotFoundException('Parent comment not found');
@@ -98,8 +106,36 @@ export class ForumService {
     });
     post.commentsCount++;
     await this.postRepository.save(post);
-    await this.commentRepository.save(newComment);
-    return newComment;
+    const savedComment = await this.commentRepository.save(newComment);
+
+    // Emitir eventos de notificação
+    if (parentComment) {
+      // É uma resposta a um comentário
+      this.eventEmitter.emit(
+        'reply.created',
+        new ReplyCreatedEvent(
+          postId,
+          savedComment.id,
+          parentComment.profile.id,
+          profile.id,
+          profile.username,
+        ),
+      );
+    } else {
+      // É um comentário direto no post
+      this.eventEmitter.emit(
+        'comment.created',
+        new CommentCreatedEvent(
+          postId,
+          savedComment.id,
+          post.profile.id,
+          profile.id,
+          profile.username,
+        ),
+      );
+    }
+
+    return savedComment;
   }
 
   async like(postId: string, firebaseUid: string) {
@@ -126,6 +162,13 @@ export class ForumService {
     post.likesCount++;
     await this.postRepository.save(post);
     await this.likeRepository.save(newLike);
+
+    // Emitir evento de like
+    this.eventEmitter.emit(
+      'post.liked',
+      new PostLikedEvent(postId, post.profile.id, profile.id, profile.username),
+    );
+
     return { value: true, message: 'Post liked' };
   }
 

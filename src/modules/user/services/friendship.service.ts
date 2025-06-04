@@ -8,6 +8,11 @@ import { Repository } from 'typeorm';
 import { Friendship, FriendshipStatus } from '../entities/friendship.entity';
 import { Profile } from '../entities/profile.entity';
 import { UserService } from './user.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  FriendRequestSentEvent,
+  FriendRequestAcceptedEvent,
+} from '@modules/notification/events/notification.events';
 
 @Injectable()
 export class FriendshipService {
@@ -17,6 +22,7 @@ export class FriendshipService {
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
     private readonly userService: UserService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async sendFriendRequest(
@@ -60,7 +66,20 @@ export class FriendshipService {
       status: FriendshipStatus.PENDING,
     });
 
-    return this.friendshipRepository.save(friendship);
+    const savedFriendship = await this.friendshipRepository.save(friendship);
+
+    // Emitir evento de solicitação de amizade enviada
+    this.eventEmitter.emit(
+      'friend.request.sent',
+      new FriendRequestSentEvent(
+        savedFriendship.id,
+        requester.id,
+        requester.username,
+        addressee.id,
+      ),
+    );
+
+    return savedFriendship;
   }
 
   async respondToFriendRequest(
@@ -73,7 +92,7 @@ export class FriendshipService {
 
     const friendship = await this.friendshipRepository.findOne({
       where: { id: friendshipId },
-      relations: ['addressee'],
+      relations: ['addressee', 'requester'],
     });
 
     if (!friendship) {
@@ -90,7 +109,22 @@ export class FriendshipService {
       ? FriendshipStatus.ACCEPTED
       : FriendshipStatus.REJECTED;
 
-    return this.friendshipRepository.save(friendship);
+    const savedFriendship = await this.friendshipRepository.save(friendship);
+
+    // Emitir evento se a solicitação foi aceita
+    if (accept) {
+      this.eventEmitter.emit(
+        'friend.request.accepted',
+        new FriendRequestAcceptedEvent(
+          savedFriendship.id,
+          reponderProfile.id,
+          reponderProfile.username,
+          friendship.requester.id,
+        ),
+      );
+    }
+
+    return savedFriendship;
   }
 
   async getFriends(

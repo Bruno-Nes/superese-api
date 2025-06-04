@@ -8,7 +8,9 @@ import { DatabaseModule } from './config/typeorm';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { AuthGuard } from '@modules/auth/guards/auth.guard';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PlannerModule } from '@modules/planner/planner.module';
+import { NotificationModule } from './modules/notification/notification.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -19,12 +21,14 @@ import { HealthController } from './health.controller';
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
       isGlobal: true,
     }),
+    EventEmitterModule.forRoot(),
     FirebaseModule.forRoot(),
     ScheduleModule.forRoot(),
     DatabaseModule,
     DiaryModule,
     ForumModule,
     PlannerModule,
+    NotificationModule,
   ],
   controllers: [HealthController],
   providers: [
