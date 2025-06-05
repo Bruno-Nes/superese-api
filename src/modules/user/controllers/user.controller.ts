@@ -91,4 +91,16 @@ export class UserController {
     const firebaseUserId = request.user.uid;
     return await this.userService.findUserByFirebaseUid(firebaseUserId);
   }
+
+  @Get(':userId')
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Buscar usuário por ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna dados básicos do usuário',
+  })
+  async getUserById(@Param('userId') userId: string) {
+    return await this.userService.getUserBasicInfo(userId);
+  }
 }
