@@ -85,7 +85,7 @@ export class DiaryService {
       await this.userService.findUserByFirebaseUid(firebaseUid);
     const folder = await this.folderRepository.findOne({
       where: { id, profile: { id: profile.id } },
-      relations: ['diaries'],
+      relations: ['diaries', 'profile'],
     });
 
     if (!folder) {
@@ -120,6 +120,7 @@ export class DiaryService {
   async findOne(id: string): Promise<Diary> {
     const diary = await this.diaryRepository.findOne({
       where: { id },
+      relations: ['folder'],
     });
     if (!diary) {
       throw new NotFoundException('Diary not found');
@@ -130,7 +131,7 @@ export class DiaryService {
   async update(id: string, updateDiaryDto: UpdateDiaryDto): Promise<Diary> {
     const diary = await this.findOne(id);
     Object.assign(diary, updateDiaryDto);
-    return (await this.diaryRepository.insert(diary)).raw;
+    return await this.diaryRepository.save(diary);
   }
 
   async remove(id: string): Promise<void> {

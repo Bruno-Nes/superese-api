@@ -1,3 +1,5 @@
+import { ObservationResponseDTO } from './observation-response.dto';
+
 export class PlanResponseDTO {
   id: string;
   description: string;
@@ -5,6 +7,7 @@ export class PlanResponseDTO {
   progress: number;
   completed: boolean;
   goals: GoalResponseDTO[];
+  observations: ObservationResponseDTO[];
 }
 
 export class GoalResponseDTO {
