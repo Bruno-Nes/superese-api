@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Chat } from '../entities/chat.entity';
 import { Message } from '../entities/message.entity';
 import { Profile } from '../entities/profile.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MessageSentEvent } from '@modules/notification/events/notification.events';
 
 @Injectable()
 export class ChatService {
@@ -14,6 +16,7 @@ export class ChatService {
     private messageRepository: Repository<Message>,
     @InjectRepository(Profile)
     private profileRepository: Repository<Profile>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -165,6 +168,32 @@ export class ChatService {
     // Atualizar updatedAt do chat
     chat.updatedAt = new Date();
     await this.chatRepository.save(chat);
+
+    // Identificar o destinatário da mensagem (o outro usuário do chat)
+    const recipientId =
+      chat.user1.id === senderId ? chat.user2.id : chat.user1.id;
+
+    // Emitir evento de mensagem enviada para notificações
+    console.log('🚀 Emitindo evento message.sent:', {
+      chatId,
+      messageId: savedMessage.id.toString(),
+      senderId,
+      senderName: sender.username,
+      recipientId,
+      content,
+    });
+
+    this.eventEmitter.emit(
+      'message.sent',
+      new MessageSentEvent(
+        chatId,
+        savedMessage.id.toString(),
+        senderId,
+        sender.username,
+        recipientId,
+        content,
+      ),
+    );
 
     // Retornar mensagem com dados do sender
     return {

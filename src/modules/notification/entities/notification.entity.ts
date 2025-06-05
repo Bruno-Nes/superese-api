@@ -10,6 +10,7 @@ import { Profile } from '@modules/user/entities/profile.entity';
 import { Post } from '@modules/forum/entities/post.entity';
 import { Comment } from '@modules/forum/entities/comment.entity';
 import { Friendship } from '@modules/user/entities/friendship.entity';
+import { Chat } from '@modules/user/entities/chat.entity';
 
 export enum NotificationType {
   LIKE = 'like',
@@ -17,6 +18,7 @@ export enum NotificationType {
   FRIEND_REQUEST = 'friend_request',
   FRIEND_ACCEPTED = 'friend_accepted',
   REPLY = 'reply',
+  MESSAGE = 'message',
 }
 
 export enum NotificationStatus {
@@ -67,6 +69,10 @@ export class Notification {
   @ManyToOne(() => Friendship, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'friendship_id' })
   friendship?: Friendship;
+
+  @ManyToOne(() => Chat, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'chat_id' })
+  chat?: Chat;
 
   // Dados adicionais em JSON para flexibilidade
   @Column({ type: 'json', nullable: true })

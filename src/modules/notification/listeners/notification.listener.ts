@@ -8,6 +8,7 @@ import {
   ReplyCreatedEvent,
   FriendRequestSentEvent,
   FriendRequestAcceptedEvent,
+  MessageSentEvent,
 } from '../events/notification.events';
 
 @Injectable()
@@ -84,5 +85,37 @@ export class NotificationListener {
       friendshipId: event.friendshipId,
       message: `${event.accepterName} aceitou sua solicitação de amizade`,
     });
+  }
+
+  @OnEvent('message.sent')
+  async handleMessageSent(event: MessageSentEvent) {
+    console.log('📨 Evento message.sent recebido:', event);
+
+    // Não criar notificação se o usuário enviou mensagem para si mesmo
+    if (event.senderId === event.recipientId) {
+      console.log(
+        '⚠️ Não criando notificação: usuário enviou mensagem para si mesmo',
+      );
+      return;
+    }
+
+    console.log('📝 Criando notificação para:', event.recipientId);
+
+    await this.notificationService.createNotification({
+      type: NotificationType.MESSAGE,
+      recipientId: event.recipientId,
+      actorId: event.senderId,
+      chatId: event.chatId,
+      message: `${event.senderName} enviou uma mensagem`,
+      metadata: {
+        messageId: event.messageId,
+        messagePreview:
+          event.messageContent.length > 50
+            ? event.messageContent.substring(0, 50) + '...'
+            : event.messageContent,
+      },
+    });
+
+    console.log('✅ Notificação criada com sucesso');
   }
 }

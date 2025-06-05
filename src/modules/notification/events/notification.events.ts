@@ -44,3 +44,14 @@ export class FriendRequestAcceptedEvent {
     public readonly requesterId: string,
   ) {}
 }
+
+export class MessageSentEvent {
+  constructor(
+    public readonly chatId: string,
+    public readonly messageId: string,
+    public readonly senderId: string,
+    public readonly senderName: string,
+    public readonly recipientId: string,
+    public readonly messageContent: string,
+  ) {}
+}
