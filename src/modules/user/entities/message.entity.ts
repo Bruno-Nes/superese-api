@@ -31,7 +31,7 @@ export class Message {
   @Column('text')
   content: string;
 
-  @Column({ name: 'is_read', default: false })
+  @Column({ default: false })
   isRead: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
