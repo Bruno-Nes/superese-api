@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Plan } from '../entities/plan.entity';
 import { Goal } from '../entities/goal.entity';
+import { Observation } from '../entities/observation.entity';
 import { CreatePlanDTO } from '../dtos/create-plan.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Profile } from '@modules/user/entities/profile.entity';
@@ -15,6 +16,9 @@ export class PlannerService {
 
     @InjectRepository(Goal)
     private readonly goalRepository: Repository<Goal>,
+
+    @InjectRepository(Observation)
+    private readonly observationRepository: Repository<Observation>,
 
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
@@ -46,7 +50,7 @@ export class PlannerService {
     const newGoals = goals.map((goal) => {
       // Handle both string and CreateGoalDTO formats
       const description = typeof goal === 'string' ? goal : goal.description;
-      
+
       return {
         description,
       };
@@ -57,7 +61,7 @@ export class PlannerService {
     return savedPlan;
   }
 
-  async increaseProgress(planId: string) {
+  async increaseProgress(planId: string, observationText?: string) {
     const plan = await this.planRepository.findOneBy({ id: planId });
     if (!plan) {
       throw new Error('Plan not found!');
@@ -72,6 +76,15 @@ export class PlannerService {
     }
 
     await this.planRepository.save(plan);
+
+    // Criar observação se o texto foi fornecido
+    if (observationText && observationText.trim()) {
+      const observation = this.observationRepository.create({
+        text: observationText.trim(),
+        plan,
+      });
+      await this.observationRepository.save(observation);
+    }
   }
 
   async decreaseProgress(planId: string) {
@@ -91,6 +104,16 @@ export class PlannerService {
     }
 
     await this.planRepository.save(plan);
+
+    // Remover a última observação deste plano
+    const lastObservation = await this.observationRepository.findOne({
+      where: { plan: { id: planId } },
+      order: { createdAt: 'DESC' },
+    });
+
+    if (lastObservation) {
+      await this.observationRepository.remove(lastObservation);
+    }
   }
 
   async findAllByProfile(firebaseUid: string): Promise<Plan[]> {
@@ -107,7 +130,12 @@ export class PlannerService {
       where: {
         profile: { id: profileId },
       },
-      relations: ['goals'],
+      relations: ['goals', 'observations'],
+      order: {
+        observations: {
+          createdAt: 'ASC',
+        },
+      },
     });
   }
 

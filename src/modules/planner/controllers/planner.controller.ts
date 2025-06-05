@@ -13,6 +13,7 @@ import {
 import { PlannerService } from '../services/planner.service';
 import { Plan } from '../entities/plan.entity';
 import { CreatePlanDTO } from '../dtos/create-plan.dto';
+import { IncreaseProgressDTO } from '../dtos/increase-progress.dto';
 
 @Controller('planner')
 export class PlannerController {
@@ -33,8 +34,11 @@ export class PlannerController {
   }
 
   @Patch(':planId/increase')
-  async increaseProgress(@Param('planId') id: string) {
-    await this.planService.increaseProgress(id);
+  async increaseProgress(
+    @Param('planId') id: string,
+    @Body() body: IncreaseProgressDTO,
+  ) {
+    await this.planService.increaseProgress(id, body.observation);
   }
 
   @Patch(':planId/decrease')

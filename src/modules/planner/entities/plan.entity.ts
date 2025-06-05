@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Goal } from './goal.entity';
+import { Observation } from './observation.entity';
 
 @Entity('plans')
 export class Plan {
@@ -32,4 +33,9 @@ export class Plan {
 
   @OneToMany(() => Goal, (goal) => goal.plan, { cascade: true })
   goals: Goal[];
+
+  @OneToMany(() => Observation, (observation) => observation.plan, {
+    cascade: true,
+  })
+  observations: Observation[];
 }
