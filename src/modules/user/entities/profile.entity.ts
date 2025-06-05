@@ -113,11 +113,6 @@ export class Profile {
   })
   sentMessages: Promise<Message[]>;
 
-  @OneToMany(() => Message, (message) => message.receiver, {
-    lazy: true,
-  })
-  receivedMessages: Promise<Message[]>;
-
   @CreateDateColumn()
   createdAt: Date;
 

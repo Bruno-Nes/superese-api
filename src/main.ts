@@ -10,7 +10,10 @@ async function bootstrap() {
   console.log('NODE_ENV:', process.env.NODE_ENV);
 
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
+  app.enableCors({
+    origin: ['http://localhost:8100', 'http://localhost:8101'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  });
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix('v1');

@@ -1,37 +1,90 @@
 import {
   Controller,
   Get,
+  Post,
   Param,
   Query,
   UseGuards,
-  Delete,
+  Body,
+  Request,
 } from '@nestjs/common';
-import { MessageService } from '../services/message.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ChatService } from '../services/chat.service';
+import {
+  CreateOrGetChatDto,
+  SendMessageDto,
+  MarkAsReadDto,
+} from '../dtos/chat.dto';
+import { AuthGuard } from '@modules/auth/guards/auth.guard';
+import { Public } from 'src/lib/decorators/public-route.decorators';
 
-@Controller('messages')
-@UseGuards(JwtAuthGuard)
-export class MessageController {
-  constructor(private readonly messageService: MessageService) {}
+@Controller('chat')
+export class ChatController {
+  constructor(private readonly chatService: ChatService) {}
 
-  @Get('conversations/:userId')
-  async getConversations(@Param('userId') userId: string) {
-    return this.messageService.getConversations(userId);
+  @Post('create-or-get')
+  @UseGuards(AuthGuard)
+  async getOrCreateChat(
+    @Body() createOrGetChatDto: CreateOrGetChatDto,
+    @Request() req: any,
+  ) {
+    const { user1Id, user2Id } = createOrGetChatDto;
+    const currentUserId = req.user?.uid;
+    return this.chatService.getOrCreateChat(user1Id, user2Id, currentUserId);
   }
 
-  @Get('between')
-  async getMessagesBetweenUsers(
-    @Query('user1') user1Id: string,
-    @Query('user2') user2Id: string,
+  @Post(':chatId/send')
+  @UseGuards(AuthGuard)
+  async sendMessage(
+    @Param('chatId') chatId: string,
+    @Body() sendMessageDto: SendMessageDto,
+    @Request() req: any,
   ) {
-    return this.messageService.getMessagesBetweenUsers(user1Id, user2Id);
+    const { content } = sendMessageDto;
+    const senderId = req.user?.uid;
+    return this.chatService.sendMessage(chatId, senderId, content);
   }
 
-  @Delete(':messageId/:userId')
-  async deleteMessage(
-    @Param('messageId') messageId: number,
-    @Param('userId') userId: string,
+  @Get(':chatId/messages')
+  @UseGuards(AuthGuard)
+  async getNewMessages(
+    @Param('chatId') chatId: string,
+    @Query('lastMessageId') lastMessageId?: string,
   ) {
-    return this.messageService.deleteMessage(messageId, userId);
+    const lastId = lastMessageId ? parseInt(lastMessageId) : undefined;
+    return this.chatService.getNewMessages(chatId, lastId);
+  }
+
+  @Get('user/:userId')
+  @Public()
+  async getUserChats(@Param('userId') userId: string) {
+    return this.chatService.getUserChats(userId);
+  }
+
+  @Get('chats')
+  @UseGuards(AuthGuard)
+  async getCurrentUserChats(@Request() req: any) {
+    const currentUserId = req.user?.id;
+    return this.chatService.getUserChats(currentUserId);
+  }
+
+  @Post(':chatId/mark-read')
+  @UseGuards(AuthGuard)
+  async markAsRead(
+    @Param('chatId') chatId: string,
+    @Body() markAsReadDto: MarkAsReadDto,
+  ) {
+    const { userId } = markAsReadDto;
+    const markedCount = await this.chatService.markMessagesAsRead(
+      chatId,
+      userId,
+    );
+    return { message: 'Mensagens marcadas como lidas', markedCount };
+  }
+
+  @Get(':chatId')
+  @UseGuards(AuthGuard)
+  async getChatById(@Param('chatId') chatId: string, @Request() req: any) {
+    const currentUserId = req.user?.uid;
+    return this.chatService.getChatById(chatId, currentUserId);
   }
 }

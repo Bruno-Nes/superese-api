@@ -152,6 +152,31 @@ export class UserService {
     return await this.userRepository.find();
   }
 
+  /**
+   * Buscar informações básicas de um usuário por ID
+   */
+  async getUserBasicInfo(userId: string): Promise<any> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    return {
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      foto: user.avatar,
+      displayName:
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+        user.username,
+    };
+  }
+
   async updateProfile(
     firebaseUid: string,
     updateDto: UpdateProfileDto,

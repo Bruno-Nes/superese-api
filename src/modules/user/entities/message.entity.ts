@@ -4,26 +4,36 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { Profile } from './profile.entity';
+import { Chat } from './chat.entity';
 
-@Entity()
+@Entity('message')
 export class Message {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @ManyToOne(() => Profile, (user) => user.sentMessages)
+  @ManyToOne(() => Chat, (chat) => chat.messages, {
+    onDelete: 'NO ACTION',
+    onUpdate: 'NO ACTION',
+  })
+  @JoinColumn({ name: 'chat_id' })
+  chat: Chat;
+
+  @ManyToOne(() => Profile, (user) => user.sentMessages, {
+    onDelete: 'NO ACTION',
+    onUpdate: 'NO ACTION',
+  })
+  @JoinColumn({ name: 'senderId' })
   sender: Profile;
 
-  @ManyToOne(() => Profile, (user) => user.receivedMessages)
-  receiver: Profile;
-
-  @Column()
+  @Column('text')
   content: string;
 
-  @Column({ default: false })
+  @Column({ name: 'is_read', default: false })
   isRead: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

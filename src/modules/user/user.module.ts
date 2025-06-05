@@ -14,9 +14,9 @@ import { RecoveryStatusService } from './services/recovery-status.service';
 import { NewsController } from './controllers/news.controller';
 import { NewsService } from './services/news.service';
 import { Message } from './entities/message.entity';
-import { ChatGateway } from './chat-gateway/chat.gateway';
-import { MessageService } from './services/message.service';
-import { MessageController } from './controllers/message.controller';
+import { Chat } from './entities/chat.entity';
+import { ChatService } from './services/chat.service';
+import { ChatController } from './controllers/message.controller';
 import { ConversationController } from './controllers/conversarion-history.controller';
 import { ConversationService } from './services/conversation-history.service';
 import { ConversationHistory } from './entities/conversation-history.entity';
@@ -32,6 +32,7 @@ import { PlannerModule } from '../planner/planner.module';
       ConversationHistory,
       RecoveryStatus,
       Message,
+      Chat,
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET_KEY,
@@ -45,7 +46,7 @@ import { PlannerModule } from '../planner/planner.module';
     FriendshipController,
     RecoveryStatusController,
     NewsController,
-    MessageController,
+    ChatController,
     ConversationController,
     GPTConsultationController,
   ],
@@ -54,8 +55,7 @@ import { PlannerModule } from '../planner/planner.module';
     FriendshipService,
     RecoveryStatusService,
     NewsService,
-    ChatGateway,
-    MessageService,
+    ChatService,
     ConversationService,
     GPTConsultationService,
   ],

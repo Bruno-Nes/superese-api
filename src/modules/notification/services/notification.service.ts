@@ -10,6 +10,7 @@ import { Profile } from '@modules/user/entities/profile.entity';
 import { Post } from '@modules/forum/entities/post.entity';
 import { Comment } from '@modules/forum/entities/comment.entity';
 import { Friendship } from '@modules/user/entities/friendship.entity';
+import { Chat } from '@modules/user/entities/chat.entity';
 import { GetNotificationsDto } from '../dtos/get-notifications.dto';
 import {
   NotificationListResponseDto,
@@ -35,6 +36,7 @@ export class NotificationService {
     postId?: string;
     commentId?: string;
     friendshipId?: string;
+    chatId?: string;
     metadata?: any;
   }): Promise<Notification> {
     const recipient = await this.userService.findByIdOrThrow(data.recipientId);
@@ -50,6 +52,7 @@ export class NotificationService {
       friendship: data.friendshipId
         ? ({ id: data.friendshipId } as Friendship)
         : undefined,
+      chat: data.chatId ? ({ id: data.chatId } as Chat) : undefined,
       metadata: data.metadata || {
         actorUsername: actor.username,
         ...data.metadata,
