@@ -13,6 +13,7 @@ import { Repository } from 'typeorm';
 import { CreateFolderDto } from '../dtos/create-folder.dto';
 import { UpdateFolderDto } from '../dtos/update-folder.dto';
 import { Profile } from '@modules/user/entities/profile.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class DiaryService {
@@ -22,6 +23,7 @@ export class DiaryService {
     @InjectRepository(Folder)
     private readonly folderRepository: Repository<Folder>,
     private readonly userService: UserService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -106,11 +108,39 @@ export class DiaryService {
     folderId: string,
     createDiaryDto: CreateDiaryDto,
   ): Promise<Diary> {
+    // Buscar a pasta para obter o perfil do usuário
+    const folder = await this.folderRepository.findOne({
+      where: { id: folderId },
+      relations: ['profile'],
+    });
+
+    if (!folder) {
+      throw new NotFoundException('Folder not found');
+    }
+
     const diary = this.diaryRepository.create({
       ...createDiaryDto,
       folder: { id: folderId },
     });
-    return (await this.diaryRepository.insert(diary)).raw;
+
+    const savedDiary = await this.diaryRepository.save(diary);
+
+    // Verificar se é uma reflexão profunda (título + conteúdo com pelo menos 100 caracteres)
+    const hasReflection =
+      createDiaryDto.title &&
+      createDiaryDto.content &&
+      createDiaryDto.content.length >= 100;
+
+    // Emitir evento de criação de entrada do diário
+    this.eventEmitter.emit('diary.entry.created', {
+      profileId: folder.profile.id,
+      entryId: savedDiary.id,
+      hasReflection,
+      title: createDiaryDto.title,
+      contentLength: createDiaryDto.content?.length || 0,
+    });
+
+    return savedDiary;
   }
 
   async findAll(folderId: string): Promise<Diary[]> {

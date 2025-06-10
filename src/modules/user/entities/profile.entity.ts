@@ -10,13 +10,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { Post } from 'src/modules/forum/entities/post.entity';
 import { Comment } from 'src/modules/forum/entities/comment.entity';
 import { Plan } from 'src/modules/planner/entities/plan.entity';
-import { Achievement } from 'src/modules/planner/entities/achievement.entity';
 import { Like } from 'src/modules/forum/entities/like.entity';
 import { Folder } from '@modules/diary/entities/folder.entity';
 import { Friendship } from './friendship.entity';
 import { RecoveryStatus } from './recovery-status.entity';
 import { Message } from './message.entity';
 import { ConversationHistory } from './conversation-history.entity';
+import { UserAchievement } from '@modules/achievements/entities/user-achievement.entity';
+import { UserProgress } from '@modules/achievements/entities/user-progress.entity';
 
 @Entity({ name: 'profiles' })
 export class Profile {
@@ -97,11 +98,6 @@ export class Profile {
   })
   plans: Promise<Plan[]>;
 
-  @OneToMany(() => Achievement, (achievement) => achievement.profile, {
-    lazy: true,
-  })
-  achievements: Promise<Achievement[]>;
-
   @OneToMany(() => Comment, (comment) => comment.profile)
   comments: Comment[];
 
@@ -112,6 +108,20 @@ export class Profile {
     lazy: true,
   })
   sentMessages: Promise<Message[]>;
+
+  @OneToMany(
+    () => UserAchievement,
+    (userAchievement) => userAchievement.profile,
+    {
+      lazy: true,
+    },
+  )
+  userAchievements: Promise<UserAchievement[]>;
+
+  @OneToMany(() => UserProgress, (userProgress) => userProgress.profile, {
+    lazy: true,
+  })
+  userProgresses: Promise<UserProgress[]>;
 
   @CreateDateColumn()
   createdAt: Date;

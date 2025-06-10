@@ -7,6 +7,7 @@ import { CreatePlanDTO } from '../dtos/create-plan.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Profile } from '@modules/user/entities/profile.entity';
 import { CreateGoalDTO } from '../dtos/create-goal.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class PlannerService {
@@ -22,6 +23,7 @@ export class PlannerService {
 
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async createPlan(input: CreatePlanDTO, firebaseUid: string) {
@@ -62,10 +64,15 @@ export class PlannerService {
   }
 
   async increaseProgress(planId: string, observationText?: string) {
-    const plan = await this.planRepository.findOneBy({ id: planId });
+    const plan = await this.planRepository.findOne({
+      where: { id: planId },
+      relations: ['profile'],
+    });
     if (!plan) {
       throw new Error('Plan not found!');
     }
+
+    const wasCompleted = plan.completed;
 
     if (!plan.completed) {
       plan.progress += 1;
@@ -76,6 +83,24 @@ export class PlannerService {
     }
 
     await this.planRepository.save(plan);
+
+    // Emitir evento de progresso
+    this.eventEmitter.emit('plan.progress.updated', {
+      profileId: plan.profile.id,
+      planId: plan.id,
+      progressType: 'increase',
+      currentProgress: plan.progress,
+      duration: plan.duration,
+    });
+
+    // Emitir evento de conclusão se acabou de ser completado
+    if (!wasCompleted && plan.completed) {
+      this.eventEmitter.emit('plan.completed', {
+        profileId: plan.profile.id,
+        planId: plan.id,
+        duration: plan.duration,
+      });
+    }
 
     // Criar observação se o texto foi fornecido
     if (observationText && observationText.trim()) {

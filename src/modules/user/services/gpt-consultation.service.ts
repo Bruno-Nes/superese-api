@@ -8,6 +8,7 @@ import { MoodType } from '../entities/conversation-history.entity';
 import { Plan } from '../../planner/entities/plan.entity';
 import { CreatePlanDTO } from '../../planner/dtos/create-plan.dto';
 import { CreateGoalDTO } from '../../planner/dtos/create-goal.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 interface ExtractedPlanData {
   title: string;
@@ -23,6 +24,7 @@ export class GPTConsultationService {
     private openAIService: OpenAIService,
     private conversationService: ConversationService,
     private plannerService: PlannerService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async consultGPT(
@@ -79,6 +81,17 @@ export class GPTConsultationService {
       } else {
         console.log('❌ Nenhum plano foi detectado na resposta do GPT');
       }
+
+      // Emitir evento para conquista de busca por ajuda da IA
+      this.eventEmitter.emit('gpt.consultation.help', {
+        profileId: firebaseUid,
+        actionType: 'ai_help_seeking',
+        data: {
+          conversationType: 'ai_help',
+          mood,
+          planCreated: !!createdPlan,
+        },
+      });
 
       // Retornar resposta
       const response: GPTConsultationResponseDto = {

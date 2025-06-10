@@ -11,6 +11,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PlannerModule } from '@modules/planner/planner.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { AchievementsModule } from './modules/achievements/achievements.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -29,6 +30,7 @@ import { HealthController } from './health.controller';
     ForumModule,
     PlannerModule,
     NotificationModule,
+    AchievementsModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -169,6 +169,13 @@ export class ForumService {
       new PostLikedEvent(postId, post.profile.id, profile.id, profile.username),
     );
 
+    // Verificar milestones de popularidade
+    this.checkPostPopularityMilestones(
+      postId,
+      post.likesCount,
+      post.profile.id,
+    );
+
     return { value: true, message: 'Post liked' };
   }
 
@@ -227,5 +234,23 @@ export class ForumService {
     await this.likeRepository.delete({ post: { id: postId } });
 
     return await this.postRepository.delete(postId);
+  }
+
+  private checkPostPopularityMilestones(
+    postId: string,
+    likesCount: number,
+    authorId: string,
+  ): void {
+    const milestones = [10, 50, 100];
+
+    // Verificar se atingiu algum milestone
+    if (milestones.includes(likesCount)) {
+      this.eventEmitter.emit('post.likes.milestone', {
+        postId,
+        authorId,
+        likesCount,
+        milestone: likesCount,
+      });
+    }
   }
 }
