@@ -11,9 +11,13 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: '*', // permite qualquer origem
-    methods: '*', // permite todos os métodos HTTP
-    allowedHeaders: '*', // permite qualquer cabeçalho
+    origin: [
+      'http://localhost:8100',
+      'http://localhost:8101',
+      'http://localhost:8102',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new HttpExceptionFilter());
