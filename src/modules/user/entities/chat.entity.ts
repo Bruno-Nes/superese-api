@@ -15,11 +15,19 @@ export class Chat {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Profile, { eager: true })
+  @ManyToOne(() => Profile, {
+    eager: true,
+    onDelete: 'NO ACTION',
+    onUpdate: 'NO ACTION',
+  })
   @JoinColumn({ name: 'user1_id' })
   user1: Profile;
 
-  @ManyToOne(() => Profile, { eager: true })
+  @ManyToOne(() => Profile, {
+    eager: true,
+    onDelete: 'NO ACTION',
+    onUpdate: 'NO ACTION',
+  })
   @JoinColumn({ name: 'user2_id' })
   user2: Profile;
 

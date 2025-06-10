@@ -52,8 +52,10 @@ export class UserController {
     status: 200,
     description: 'Lista de usuários retornada com sucesso',
   })
-  async getUsers() {
-    return await this.userService.findAll();
+  @UseGuards(AuthGuard)
+  async getUsers(@Request() request: any) {
+    const firebaseUserId = request.user.uid;
+    return await this.userService.findAll(firebaseUserId);
   }
 
   @Get('get-user/:id')

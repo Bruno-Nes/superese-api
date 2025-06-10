@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Profile } from '../entities/profile.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CreateUserDTO } from '../dtos/create-user.dto';
 import { FirebaseService } from '@modules/firebase/firebase.service';
 import { RecoveryStatusService } from '@modules/user/services/recovery-status.service';
@@ -148,8 +148,13 @@ export class UserService {
     });
   }
 
-  async findAll(): Promise<Profile[]> {
-    return await this.userRepository.find();
+  async findAll(firebase: string): Promise<Profile[]> {
+    return await this.userRepository.find({
+      where: {
+        isPrivate: false,
+        firebaseUid: Not(firebase),
+      },
+    });
   }
 
   /**
