@@ -23,6 +23,7 @@ import { ConversationHistory } from './entities/conversation-history.entity';
 import { GPTConsultationService } from './services/gpt-consultation.service';
 import { GPTConsultationController } from './controllers/gpt-consultation.controller';
 import { PlannerModule } from '../planner/planner.module';
+import { AchievementsModule } from '../achievements/achievements.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { PlannerModule } from '../planner/planner.module';
     }),
     OpenAIModule.forRoot(),
     PlannerModule,
+    AchievementsModule,
   ],
   controllers: [
     UserController,

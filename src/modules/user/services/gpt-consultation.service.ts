@@ -93,10 +93,13 @@ export class GPTConsultationService {
         },
       });
 
+      // Limpar tags internas da resposta antes de retornar ao frontend
+      const cleanedGptResponse = this.removeInternalTags(gptResponse);
+
       // Retornar resposta
       const response: GPTConsultationResponseDto = {
         message: 'Consulta realizada com sucesso',
-        gptResponse,
+        gptResponse: cleanedGptResponse,
         conversationId: conversation.id,
       };
 
@@ -171,7 +174,9 @@ Mensagem do usuário: ${userMessage}`,
     console.log('📄 Resposta do GPT para análise:', gptResponse);
 
     try {
-      const planMatch = gptResponse.match(/<criarPlano>(.*?)<\/criarPlano>/s);
+      const planMatch = gptResponse.match(
+        /<criarPlano>([\s\S]*?)<\/criarPlano>/,
+      );
       console.log('🎯 Regex match result:', planMatch);
 
       if (!planMatch) {
@@ -207,6 +212,26 @@ Mensagem do usuário: ${userMessage}`,
       this.log.error('Error extracting plan from response:', error);
       return null;
     }
+  }
+
+  /**
+   * Remove tags internas utilizadas para comunicação com o GPT
+   * que não devem ser exibidas ao usuário final
+   */
+  private removeInternalTags(gptResponse: string): string {
+    console.log('🧹 Removendo tags internas da resposta do GPT...');
+
+    // Remove tags <criarPlano> e seu conteúdo
+    let cleanedResponse = gptResponse.replace(
+      /<criarPlano>[\s\S]*?<\/criarPlano>/g,
+      '',
+    );
+
+    // Remove quebras de linha extras que podem ter sobrado
+    cleanedResponse = cleanedResponse.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+
+    console.log('✅ Tags internas removidas com sucesso');
+    return cleanedResponse;
   }
 
   async gerarRelatorioMotivacional(

@@ -7,6 +7,7 @@ import { FirebaseService } from '@modules/firebase/firebase.service';
 import { RecoveryStatusService } from '@modules/user/services/recovery-status.service';
 import { UpdateProfileDto } from '../dtos/update-user.dto';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
+import { AchievementsService } from '@modules/achievements/services/achievements.service';
 
 @Injectable()
 export class UserService {
@@ -15,6 +16,7 @@ export class UserService {
     private readonly userRepository: Repository<Profile>,
     private readonly recovery: RecoveryStatusService,
     private readonly firebaseService: FirebaseService,
+    private readonly achievementsService: AchievementsService,
   ) {}
 
   async createUser(input: CreateUserDTO): Promise<any> {
@@ -39,9 +41,17 @@ export class UserService {
       ...input,
       firebaseUid: newUser.uid,
     });
-    await this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
 
-    await this.recovery.markRelapse(user.firebaseUid);
+    await this.recovery.markRelapse(savedUser.firebaseUid);
+
+    // Initialize achievement tracking for the new user
+    try {
+      await this.achievementsService.initializeUserAchievements(savedUser.id);
+    } catch (error) {
+      console.error('Error initializing user achievements:', error);
+      // Don't throw error - user creation should succeed even if achievement initialization fails
+    }
 
     return newUser;
   }
@@ -75,6 +85,14 @@ export class UserService {
 
       // Marca como primeira vez no sistema de recuperação
       await this.recovery.markRelapse(firebaseUid);
+
+      // Initialize achievement tracking for the new user
+      try {
+        await this.achievementsService.initializeUserAchievements(savedUser.id);
+      } catch (error) {
+        console.error('Error initializing user achievements:', error);
+        // Don't throw error - user creation should succeed even if achievement initialization fails
+      }
 
       return savedUser;
     } catch (error) {
@@ -122,6 +140,14 @@ export class UserService {
 
       // Marca como primeira vez no sistema de recuperação
       await this.recovery.markRelapse(googleUid);
+
+      // Initialize achievement tracking for the new user
+      try {
+        await this.achievementsService.initializeUserAchievements(savedUser.id);
+      } catch (error) {
+        console.error('Error initializing user achievements:', error);
+        // Don't throw error - user creation should succeed even if achievement initialization fails
+      }
 
       return savedUser;
     } catch (error) {

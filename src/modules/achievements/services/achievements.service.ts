@@ -140,7 +140,6 @@ export class AchievementsService {
     profileId: string,
     achievementType: AchievementType,
     incrementValue: number = 1,
-    customData?: any,
   ): Promise<void> {
     try {
       // Buscar conquistas do tipo especificado
@@ -169,7 +168,6 @@ export class AchievementsService {
           profile,
           achievement,
           incrementValue,
-          customData,
         );
       }
     } catch (error) {
@@ -181,7 +179,6 @@ export class AchievementsService {
     profile: Profile,
     achievement: Achievement,
     incrementValue: number,
-    customData?: any,
   ): Promise<void> {
     // Verificar se já foi desbloqueada
     const existingUnlock = await this.userAchievementRepository.findOne({
@@ -333,5 +330,69 @@ export class AchievementsService {
         hasNewBadge: true,
       },
     });
+  }
+
+  /**
+   * Initialize achievement tracking for a new user.
+   * Creates UserProgress records for all active achievements.
+   */
+  async initializeUserAchievements(profileId: string): Promise<void> {
+    try {
+      this.logger.log(`Initializing achievements for user ${profileId}`);
+
+      // Get the user profile
+      const profile = await this.profileRepository.findOne({
+        where: { id: profileId },
+      });
+
+      if (!profile) {
+        this.logger.error(`Profile not found: ${profileId}`);
+        return;
+      }
+
+      // Get all active achievements
+      const achievements = await this.achievementRepository.find({
+        where: { isActive: true },
+      });
+
+      if (achievements.length === 0) {
+        this.logger.warn('No active achievements found to initialize');
+        return;
+      }
+
+      // Check if user already has progress records (avoid duplicates)
+      const existingProgress = await this.userProgressRepository.find({
+        where: { profile: { id: profile.id } },
+      });
+
+      if (existingProgress.length > 0) {
+        this.logger.log(
+          `User ${profileId} already has achievement progress initialized`,
+        );
+        return;
+      }
+
+      // Create UserProgress records for all achievements
+      const progressRecords = achievements.map((achievement) =>
+        this.userProgressRepository.create({
+          profile,
+          achievement,
+          currentValue: 0,
+          lastNotificationAt: 0,
+        }),
+      );
+
+      await this.userProgressRepository.save(progressRecords);
+
+      this.logger.log(
+        `Successfully initialized ${progressRecords.length} achievement tracking records for user ${profileId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error initializing achievements for user ${profileId}:`,
+        error,
+      );
+      throw error;
+    }
   }
 }
