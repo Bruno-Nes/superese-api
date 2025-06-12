@@ -73,7 +73,8 @@ export class ForumService {
 
     if (post) {
       const comments = await this.findCommentsByPost(post.id);
-      post.comments = comments;
+      // Usar qualquer tipo para os comentários para evitar problemas de tipagem
+      (post as any).comments = comments;
     }
 
     return post;
@@ -180,24 +181,62 @@ export class ForumService {
   }
 
   async findCommentsByPost(postId: string) {
-    const comments = await this.commentRepository.find({
-      where: { post: { id: postId }, parentComment: null },
-      relations: ['profile', 'replies', 'replies.profile', 'replies.replies'],
-      order: { createdAt: 'ASC' },
-    });
+    // Buscar apenas comentários principais (sem pai) usando IS NULL
+    const comments = await this.commentRepository
+      .createQueryBuilder('comment')
+      .leftJoinAndSelect('comment.profile', 'profile')
+      .where('comment.post_id = :postId', { postId })
+      .andWhere('comment.parent_comment_id IS NULL')
+      .orderBy('comment.createdAt', 'ASC')
+      .getMany();
 
-    const buildTree = (comment: Comment): any => ({
-      id: comment.id,
-      content: comment.content,
-      createdAt: comment.createdAt,
-      profile: {
-        id: comment.profile.id,
-        username: comment.profile.username,
-      },
-      replies: (comment.replies || []).map(buildTree),
-    });
+    // Para cada comentário principal, buscar suas replies recursivamente
+    const commentsWithReplies = await Promise.all(
+      comments.map(async (comment) => {
+        const replies = await this.findRepliesByComment(comment.id);
+        return {
+          id: comment.id,
+          content: comment.content,
+          createdAt: comment.createdAt,
+          profile: {
+            id: comment.profile.id,
+            username: comment.profile.username,
+          },
+          replies: replies,
+        };
+      }),
+    );
 
-    return comments.map(buildTree);
+    return commentsWithReplies;
+  }
+
+  // Método auxiliar para buscar replies recursivamente
+  private async findRepliesByComment(commentId: string): Promise<any[]> {
+    const replies = await this.commentRepository
+      .createQueryBuilder('comment')
+      .leftJoinAndSelect('comment.profile', 'profile')
+      .where('comment.parent_comment_id = :commentId', { commentId })
+      .orderBy('comment.createdAt', 'ASC')
+      .getMany();
+
+    // Buscar replies das replies (recursivo)
+    const repliesWithSubReplies = await Promise.all(
+      replies.map(async (reply) => {
+        const subReplies = await this.findRepliesByComment(reply.id);
+        return {
+          id: reply.id,
+          content: reply.content,
+          createdAt: reply.createdAt,
+          profile: {
+            id: reply.profile.id,
+            username: reply.profile.username,
+          },
+          replies: subReplies,
+        };
+      }),
+    );
+
+    return repliesWithSubReplies;
   }
 
   async getLikesByPost(postId: string) {

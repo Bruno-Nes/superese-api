@@ -142,7 +142,6 @@ export class AchievementsService {
     incrementValue: number = 1,
   ): Promise<void> {
     try {
-      // Buscar conquistas do tipo especificado
       const achievements = await this.achievementRepository.find({
         where: { type: achievementType, isActive: true },
       });
@@ -360,7 +359,6 @@ export class AchievementsService {
         return;
       }
 
-      // Check if user already has progress records (avoid duplicates)
       const existingProgress = await this.userProgressRepository.find({
         where: { profile: { id: profile.id } },
       });

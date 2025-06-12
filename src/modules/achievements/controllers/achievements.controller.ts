@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Request,
   HttpCode,
   HttpStatus,
@@ -64,5 +65,53 @@ export class AchievementsController {
     const firebaseUid = request.user.uid;
     await this.achievementsService.markBadgeAsSeen(firebaseUid, achievementId);
     return { success: true };
+  }
+
+  @Post('initialize-my-achievements')
+  @HttpCode(HttpStatus.OK)
+  async initializeMyAchievements(
+    @Request() request: any,
+  ): Promise<{ message: string; initialized: number }> {
+    const firebaseUid = request.user.uid;
+
+    // Buscar o profile do usuário
+    const profile = await this.achievementsService['profileRepository'].findOne(
+      {
+        where: { firebaseUid },
+      },
+    );
+
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
+
+    // Verificar se já tem progresso
+    const existingProgress = await this.achievementsService[
+      'userProgressRepository'
+    ].find({
+      where: { profile: { id: profile.id } },
+    });
+
+    if (existingProgress.length > 0) {
+      return {
+        message: `User already has ${existingProgress.length} achievement progress records initialized`,
+        initialized: existingProgress.length,
+      };
+    }
+
+    // Inicializar conquistas
+    await this.achievementsService.initializeUserAchievements(profile.id);
+
+    // Contar quantos foram criados
+    const newProgress = await this.achievementsService[
+      'userProgressRepository'
+    ].find({
+      where: { profile: { id: profile.id } },
+    });
+
+    return {
+      message: `Successfully initialized achievement tracking for user`,
+      initialized: newProgress.length,
+    };
   }
 }
