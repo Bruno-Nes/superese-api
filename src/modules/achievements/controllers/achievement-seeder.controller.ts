@@ -1,6 +1,6 @@
 import { Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
 import { AchievementSeederService } from '../services/achievement-seeder.service';
-import { Public } from '@lib/decorators/public-route.decorators';
+import { Public } from 'src/lib/decorators/public-route.decorators';
 
 @Controller('achievements/seeder')
 export class AchievementSeederController {
