@@ -3,10 +3,12 @@ import { Repository } from 'typeorm';
 import { Plan } from '../entities/plan.entity';
 import { Goal } from '../entities/goal.entity';
 import { Observation } from '../entities/observation.entity';
+import { MotivationalReport } from '../entities/motivational-report.entity';
 import { CreatePlanDTO } from '../dtos/create-plan.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Profile } from '@modules/user/entities/profile.entity';
 import { CreateGoalDTO } from '../dtos/create-goal.dto';
+import { MotivationalReportResponseDto } from '../dtos/motivational-report-response.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
@@ -20,6 +22,9 @@ export class PlannerService {
 
     @InjectRepository(Observation)
     private readonly observationRepository: Repository<Observation>,
+
+    @InjectRepository(MotivationalReport)
+    private readonly motivationalReportRepository: Repository<MotivationalReport>,
 
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
@@ -208,6 +213,104 @@ export class PlannerService {
     return {
       success: true,
       message: 'Plan and its goals deleted successfully',
+    };
+  }
+
+  /**
+   * Salvar relatório motivacional para um plano
+   */
+  async saveMotivationalReport(
+    planId: string,
+    content: string,
+    firebaseUid: string,
+  ): Promise<MotivationalReportResponseDto> {
+    // Verificar se o plano existe e pertence ao usuário
+    const profile = await this.profileRepository.findOneBy({ firebaseUid });
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    const plan = await this.planRepository.findOne({
+      where: { id: planId, profile: { id: profile.id } },
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Plan not found or does not belong to user');
+    }
+
+    // Verificar se já existe um relatório para este plano
+    const existingReport = await this.motivationalReportRepository.findOne({
+      where: { planId },
+    });
+
+    if (existingReport) {
+      // Atualizar o relatório existente
+      existingReport.content = content;
+      existingReport.updatedAt = new Date();
+      const updatedReport =
+        await this.motivationalReportRepository.save(existingReport);
+
+      return {
+        id: updatedReport.id,
+        content: updatedReport.content,
+        planId: updatedReport.planId,
+        createdAt: updatedReport.createdAt,
+      };
+    } else {
+      // Criar novo relatório
+      const motivationalReport = this.motivationalReportRepository.create({
+        content,
+        planId,
+        plan,
+      });
+
+      const savedReport =
+        await this.motivationalReportRepository.save(motivationalReport);
+
+      return {
+        id: savedReport.id,
+        content: savedReport.content,
+        planId: savedReport.planId,
+        createdAt: savedReport.createdAt,
+      };
+    }
+  }
+
+  /**
+   * Buscar relatório motivacional por planId
+   */
+  async getMotivationalReportByPlanId(
+    planId: string,
+    firebaseUid: string,
+  ): Promise<MotivationalReportResponseDto | null> {
+    // Verificar se o plano pertence ao usuário
+    const profile = await this.profileRepository.findOneBy({ firebaseUid });
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    const plan = await this.planRepository.findOne({
+      where: { id: planId, profile: { id: profile.id } },
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Plan not found or does not belong to user');
+    }
+
+    // Buscar o relatório
+    const report = await this.motivationalReportRepository.findOne({
+      where: { planId },
+    });
+
+    if (!report) {
+      return null;
+    }
+
+    return {
+      id: report.id,
+      content: report.content,
+      planId: report.planId,
+      createdAt: report.createdAt,
     };
   }
 }

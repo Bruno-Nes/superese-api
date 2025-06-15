@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Goal } from './goal.entity';
 import { Observation } from './observation.entity';
+import { MotivationalReport } from './motivational-report.entity';
 
 @Entity('plans')
 export class Plan {
@@ -38,4 +39,9 @@ export class Plan {
     cascade: true,
   })
   observations: Observation[];
+
+  @OneToMany(() => MotivationalReport, (report) => report.plan, {
+    cascade: true,
+  })
+  motivationalReports: MotivationalReport[];
 }

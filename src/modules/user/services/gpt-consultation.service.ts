@@ -244,7 +244,7 @@ Mensagem do usuário: ${userMessage}`,
   async gerarRelatorioMotivacional(
     planId: string,
     firebaseUid: string,
-  ): Promise<{ relatorio: string }> {
+  ): Promise<{ relatorio: string; reportId: string }> {
     console.log('🎯 Gerando relatório motivacional para o plano:', planId);
 
     try {
@@ -312,8 +312,18 @@ Escreva uma mensagem motivacional que reflita especificamente sobre essa jornada
         relatorioMotivacional.substring(0, 200) + '...',
       );
 
+      // Salvar o relatório no banco de dados
+      const savedReport = await this.plannerService.saveMotivationalReport(
+        planId,
+        relatorioMotivacional,
+        firebaseUid,
+      );
+
+      console.log('💾 Relatório salvo no banco de dados:', savedReport.id);
+
       return {
         relatorio: relatorioMotivacional,
+        reportId: savedReport.id,
       };
     } catch (error) {
       this.log.error('Error generating motivational report:', error);

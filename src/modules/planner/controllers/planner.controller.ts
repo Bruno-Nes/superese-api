@@ -52,4 +52,25 @@ export class PlannerController {
     const firebaseUserId = request.user.uid;
     return await this.planService.deletePlan(planId, firebaseUserId);
   }
+
+  @Get(':planId/motivational-report')
+  @HttpCode(HttpStatus.OK)
+  async getMotivationalReport(
+    @Param('planId') planId: string,
+    @Request() request: any,
+  ) {
+    const firebaseUserId = request.user.uid;
+    const report = await this.planService.getMotivationalReportByPlanId(
+      planId,
+      firebaseUserId,
+    );
+
+    if (!report) {
+      return {
+        message: 'Nenhum relatório motivacional encontrado para este plano',
+      };
+    }
+
+    return report;
+  }
 }
