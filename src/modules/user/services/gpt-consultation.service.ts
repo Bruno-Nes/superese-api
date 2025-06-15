@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OpenAIService } from '../../openai/openai.service';
 import { ConversationService } from './conversation-history.service';
 import { PlannerService } from '../../planner/services/planner.service';
@@ -9,6 +9,9 @@ import { Plan } from '../../planner/entities/plan.entity';
 import { CreatePlanDTO } from '../../planner/dtos/create-plan.dto';
 import { CreateGoalDTO } from '../../planner/dtos/create-goal.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Profile } from '../entities/profile.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 interface ExtractedPlanData {
   title: string;
@@ -25,6 +28,8 @@ export class GPTConsultationService {
     private conversationService: ConversationService,
     private plannerService: PlannerService,
     private eventEmitter: EventEmitter2,
+    @InjectRepository(Profile)
+    private readonly profileRepository: Repository<Profile>,
   ) {}
 
   async consultGPT(
@@ -41,7 +46,6 @@ export class GPTConsultationService {
       const gptResponse = await this.openAIService.create(prompt);
 
       this.log.debug('GPT Response:', gptResponse);
-      console.log('🤖 GPT Response completa:', gptResponse);
 
       // Salvar no histórico de conversas
       const conversation = await this.conversationService.create(
@@ -56,12 +60,9 @@ export class GPTConsultationService {
       // Verificar se existe plano na resposta
       const planData = this.extractPlanFromResponse(gptResponse);
       this.log.debug('Extracted Plan Data:', planData);
-      console.log('📋 Dados do plano extraídos:', planData);
       let createdPlan: Plan | null = null;
 
       if (planData) {
-        console.log('✅ Plano detectado, criando no banco...');
-        // Converter para o formato esperado pelo PlannerService
         const createPlanDto: CreatePlanDTO = {
           description: planData.description,
           duration: 7, // Duração padrão de 7 dias
@@ -77,14 +78,20 @@ export class GPTConsultationService {
           createPlanDto,
           firebaseUid,
         );
-        console.log('🎯 Plano criado com sucesso:', createdPlan);
       } else {
         console.log('❌ Nenhum plano foi detectado na resposta do GPT');
       }
 
+      const profile: Profile = await this.profileRepository.findOneBy({
+        firebaseUid,
+      });
+      if (!profile) {
+        throw new NotFoundException('Profile not foung!');
+      }
+
       // Emitir evento para conquista de busca por ajuda da IA
       this.eventEmitter.emit('gpt.consultation.help', {
-        profileId: firebaseUid,
+        profileId: profile.id,
         actionType: 'ai_help_seeking',
         data: {
           conversationType: 'ai_help',

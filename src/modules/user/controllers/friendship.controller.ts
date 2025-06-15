@@ -7,6 +7,7 @@ import {
   Request,
   Query,
   Get,
+  Delete,
 } from '@nestjs/common';
 import { FriendshipService } from '../services/friendship.service';
 
@@ -77,5 +78,16 @@ export class FriendshipController {
   ) {
     const userId = request.user.uid;
     return this.friendshipService.getPendingRequests(userId, search);
+  }
+
+  @Delete('unfriend/:friendUserId')
+  @UseGuards(AuthGuard)
+  async unfriend(
+    @Param('friendUserId') friendUserId: string,
+    @Request() request: any,
+  ) {
+    const currentUserFirebaseUid = request.user.uid;
+    await this.friendshipService.unfriend(currentUserFirebaseUid, friendUserId);
+    return { message: 'Amizade removida com sucesso' };
   }
 }

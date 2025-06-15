@@ -398,4 +398,18 @@ export class ChatService {
       displayName: `${user.firstName} ${user.lastName}`.trim(),
     };
   }
+
+  /**
+   * Buscar todos os chats do usuário atual por Firebase UID
+   */
+  async getCurrentUserChats(firebaseUid: string): Promise<any[]> {
+    const profile: Profile = await this.profileRepository.findOneBy({
+      firebaseUid,
+    });
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    return this.getUserChats(profile.id);
+  }
 }

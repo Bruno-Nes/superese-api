@@ -142,6 +142,9 @@ export class AchievementsService {
     incrementValue: number = 1,
   ): Promise<void> {
     try {
+      console.log(
+        `Updating progress for profile ${profileId} and achievement type ${achievementType}`,
+      );
       const achievements = await this.achievementRepository.find({
         where: { type: achievementType, isActive: true },
       });
@@ -305,12 +308,27 @@ export class AchievementsService {
       return;
     }
 
-    await this.userAchievementRepository.update(
-      {
-        profile: { id: profile.id },
-        achievement: { id: achievementId },
-      },
-      { hasNewBadge: false },
+    const existingRecord = await this.userAchievementRepository.findOne({
+      where: { id: achievementId },
+    });
+
+    if (!existingRecord) {
+      this.logger.warn(
+        `UserAchievement not found for profile ${profile.id} and achievement ${achievementId}`,
+      );
+      return;
+    }
+
+    this.logger.log(
+      `Found UserAchievement record: ${existingRecord.id}, hasNewBadge: ${existingRecord.hasNewBadge}`,
+    );
+
+    // Usar o método save ao invés de update
+    existingRecord.hasNewBadge = false;
+    await this.userAchievementRepository.save(existingRecord);
+
+    this.logger.log(
+      `Successfully updated hasNewBadge to false for achievement ${achievementId}`,
     );
   }
 

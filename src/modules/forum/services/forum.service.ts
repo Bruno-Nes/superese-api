@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreatePostDTO } from '../dtos/create-post.dto';
@@ -22,6 +23,7 @@ import {
 
 @Injectable()
 export class ForumService {
+  private readonly logger;
   constructor(
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
@@ -31,7 +33,9 @@ export class ForumService {
     private readonly commentRepository: Repository<Comment>,
     private readonly userService: UserService,
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) {
+    this.logger = new Logger(ForumService.name);
+  }
 
   async create(post: CreatePostDTO, firebaseUid: string) {
     const profile = await this.userService.findUserByFirebaseUid(firebaseUid);
@@ -51,9 +55,6 @@ export class ForumService {
       throw new Error('Profile not found!');
     }
 
-    const { limit, offset } = paginationQuery;
-    console.log('Finding posts with limit:', limit, 'and offset:', offset);
-
     const posts = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.profile', 'profile')
@@ -70,10 +71,8 @@ export class ForumService {
         profile: true,
       },
     });
-
     if (post) {
       const comments = await this.findCommentsByPost(post.id);
-      // Usar qualquer tipo para os comentários para evitar problemas de tipagem
       (post as any).comments = comments;
     }
 
@@ -84,6 +83,7 @@ export class ForumService {
     const profile: Profile =
       await this.userService.findUserByFirebaseUid(firebaseUid);
     const { id } = profile;
+    console.log('Commenting on post:', postId, 'by user:', id);
     const post: DeepPartial<Post> = await this.findPostById(postId);
     if (!post) {
       throw new Error('Post not found');
@@ -185,8 +185,8 @@ export class ForumService {
     const comments = await this.commentRepository
       .createQueryBuilder('comment')
       .leftJoinAndSelect('comment.profile', 'profile')
-      .where('comment.post_id = :postId', { postId })
-      .andWhere('comment.parent_comment_id IS NULL')
+      .where('comment.postId = :postId', { postId })
+      .andWhere('comment.parentCommentId IS NULL')
       .orderBy('comment.createdAt', 'ASC')
       .getMany();
 
@@ -215,7 +215,7 @@ export class ForumService {
     const replies = await this.commentRepository
       .createQueryBuilder('comment')
       .leftJoinAndSelect('comment.profile', 'profile')
-      .where('comment.parent_comment_id = :commentId', { commentId })
+      .where('comment.parentCommentId = :commentId', { commentId })
       .orderBy('comment.createdAt', 'ASC')
       .getMany();
 

@@ -63,8 +63,8 @@ export class ChatController {
   @Get('chats')
   @UseGuards(AuthGuard)
   async getCurrentUserChats(@Request() req: any) {
-    const currentUserId = req.user?.id;
-    return this.chatService.getUserChats(currentUserId);
+    const firebaseUid = req.user?.uid;
+    return this.chatService.getCurrentUserChats(firebaseUid);
   }
 
   @Post(':chatId/mark-read')

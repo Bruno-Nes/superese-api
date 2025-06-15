@@ -231,4 +231,49 @@ export class FriendshipService {
 
     return !!friendship;
   }
+
+  async unfriend(
+    currentUserFirebaseUid: string,
+    friendUserId: string,
+  ): Promise<void> {
+    // Buscar o perfil do usuário atual
+    const currentUser = await this.userService.findUserByFirebaseUid(
+      currentUserFirebaseUid,
+    );
+    if (!currentUser) {
+      throw new NotFoundException('Usuário atual não encontrado');
+    }
+
+    // Verificar se o usuário a ser removido existe
+    const friendUser = await this.profileRepository.findOne({
+      where: { id: friendUserId },
+    });
+    if (!friendUser) {
+      throw new NotFoundException('Usuário a ser removido não encontrado');
+    }
+
+    // Buscar a amizade existente (independente de quem enviou a solicitação)
+    const friendship = await this.friendshipRepository.findOne({
+      where: [
+        {
+          requester: { id: currentUser.id },
+          addressee: { id: friendUserId },
+          status: FriendshipStatus.ACCEPTED,
+        },
+        {
+          requester: { id: friendUserId },
+          addressee: { id: currentUser.id },
+          status: FriendshipStatus.ACCEPTED,
+        },
+      ],
+      relations: ['requester', 'addressee'],
+    });
+
+    if (!friendship) {
+      throw new NotFoundException('Amizade não encontrada ou já foi removida');
+    }
+
+    // Remover a amizade do banco de dados
+    await this.friendshipRepository.remove(friendship);
+  }
 }
