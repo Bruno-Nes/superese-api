@@ -27,8 +27,8 @@ export class Profile {
   @Column()
   firebaseUid: string;
 
-  @Column()
-  googleUid: string;
+  @Column({ nullable: true })
+  googleUid?: string;
 
   @Column({ length: 30 })
   firstName?: string;

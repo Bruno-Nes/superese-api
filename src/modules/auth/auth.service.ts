@@ -98,7 +98,7 @@ export class AuthService {
         `Decoded token: ${JSON.stringify(decodedToken, null, 2)}`,
       );
 
-      // Verifica se o usuário existe no banco local pelo firebaseUid (que será o googleUid)
+      // Verifica se o usuário existe no banco local pelo firebaseUid
       let user = await this.usersService.findUserByFirebaseUid(
         decodedToken.uid,
       );
@@ -106,7 +106,8 @@ export class AuthService {
       if (!user) {
         // Se não existir, cria o usuário no banco local
         user = await this.usersService.createUserFromGoogle(
-          decodedToken.uid,
+          decodedToken.uid, // Firebase UID
+          googleLoginData.googleUid, // Google UID
           decodedToken.email,
           decodedToken.name ||
             googleLoginData.displayName ||

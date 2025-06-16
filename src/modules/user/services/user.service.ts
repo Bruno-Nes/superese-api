@@ -69,8 +69,10 @@ export class UserService {
         return existingUser;
       }
 
-      // Gera username anônimo se não tiver displayName
-      const username = displayName || this.gerarUsernameAnonimo();
+      // Gera username único
+      const username = displayName
+        ? await this.generateUniqueUsername(displayName)
+        : this.gerarUsernameAnonimo();
 
       // Cria o usuário no banco de dados local
       const user = this.userRepository.create({
@@ -102,21 +104,50 @@ export class UserService {
   }
 
   async createUserFromGoogle(
+    firebaseUid: string,
     googleUid: string,
     email: string,
     displayName?: string,
     photoURL?: string,
   ): Promise<Profile> {
     try {
-      // Verifica se o usuário já existe no banco pelo googleUid
-      const existingUser = await this.findUserByGoogleUid(googleUid);
+      // Verifica se o usuário já existe no banco pelo firebaseUid OU googleUid OU email
+      let existingUser = await this.findUserByFirebaseUid(firebaseUid);
       if (existingUser) {
+        console.log('✅ Usuário encontrado pelo Firebase UID');
         return existingUser;
       }
 
-      // Gera username baseado no displayName ou email
-      const username =
-        displayName || email.split('@')[0] || this.gerarUsernameAnonimo();
+      // Se não encontrou pelo firebaseUid, tenta pelo googleUid
+      existingUser = await this.findUserByGoogleUid(googleUid);
+      if (existingUser) {
+        console.log(
+          '✅ Usuário encontrado pelo Google UID, atualizando Firebase UID',
+        );
+        // Se encontrou pelo googleUid mas não tem firebaseUid, atualiza
+        if (!existingUser.firebaseUid) {
+          existingUser.firebaseUid = firebaseUid;
+          await this.userRepository.save(existingUser);
+        }
+        return existingUser;
+      }
+
+      // Como último recurso, verifica pelo email (caso de migração/inconsistência)
+      existingUser = await this.findUserByEmail(email);
+      if (existingUser) {
+        console.log('✅ Usuário encontrado pelo email, atualizando IDs');
+        // Atualiza os IDs que estão faltando
+        if (!existingUser.firebaseUid) existingUser.firebaseUid = firebaseUid;
+        if (!existingUser.googleUid) existingUser.googleUid = googleUid;
+        await this.userRepository.save(existingUser);
+        return existingUser;
+      }
+
+      console.log('📝 Criando novo usuário Google...');
+
+      // Gera username único baseado no displayName ou email
+      const baseUsername = displayName || email.split('@')[0];
+      const username = await this.generateUniqueUsername(baseUsername);
 
       // Separa primeiro e último nome se displayName existir
       let firstName: string, lastName: string;
@@ -128,7 +159,8 @@ export class UserService {
 
       // Cria o usuário no banco de dados local
       const user = this.userRepository.create({
-        googleUid,
+        firebaseUid, // Firebase UID (principal identificador)
+        googleUid, // Google UID (para referência)
         email,
         username,
         firstName,
@@ -138,8 +170,8 @@ export class UserService {
 
       const savedUser = await this.userRepository.save(user);
 
-      // Marca como primeira vez no sistema de recuperação
-      await this.recovery.markRelapse(googleUid);
+      // Marca como primeira vez no sistema de recuperação (usando Firebase UID)
+      await this.recovery.markRelapse(firebaseUid);
 
       // Initialize achievement tracking for the new user
       try {
@@ -165,6 +197,9 @@ export class UserService {
   }
 
   async findUserByGoogleUid(googleUid: string): Promise<Profile> {
+    if (!googleUid) {
+      return null;
+    }
     return await this.userRepository.findOne({ where: { googleUid } });
   }
 
@@ -252,6 +287,45 @@ export class UserService {
     const imageUrl = await this.firebaseService.uploadImage(file, 'avatars');
     profile.avatar = imageUrl;
     this.userRepository.save(profile);
+  }
+
+  /**
+   * Gera um username único baseado em um valor base
+   */
+  async generateUniqueUsername(baseUsername: string): Promise<string> {
+    // Remove caracteres especiais e espaços, deixa apenas letras e números
+    const cleanUsername = baseUsername
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toLowerCase();
+
+    // Se ficou muito pequeno ou vazio, gera um anônimo
+    if (cleanUsername.length < 3) {
+      return this.gerarUsernameAnonimo();
+    }
+
+    // Tenta o username original primeiro
+    let candidateUsername = cleanUsername;
+    let counter = 1;
+
+    while (true) {
+      // Verifica se o username já existe
+      const existingUser = await this.userRepository.findOne({
+        where: { username: candidateUsername },
+      });
+
+      if (!existingUser) {
+        return candidateUsername;
+      }
+
+      // Se já existe, adiciona um número
+      candidateUsername = `${cleanUsername}${counter}`;
+      counter++;
+
+      // Se passar de 999 tentativas, gera um username anônimo
+      if (counter > 999) {
+        return this.gerarUsernameAnonimo();
+      }
+    }
   }
 
   gerarUsernameAnonimo(): string {
