@@ -37,17 +37,28 @@ export class GPTConsultationService {
     firebaseUid: string,
   ): Promise<GPTConsultationResponseDto> {
     const { mood, userMessage } = requestDto;
+    
+    this.log.log('=== Starting GPT Consultation Service ===');
+    this.log.log(`Firebase UID: ${firebaseUid}`);
+    this.log.log(`Mood: ${mood}`);
+    this.log.log(`User message: ${userMessage}`);
 
     // Construir prompt baseado no mood
+    this.log.debug('Building prompt based on mood...');
     const prompt = this.buildPromptByMood(mood, userMessage);
+    this.log.debug(`Prompt length: ${prompt.length} characters`);
 
     try {
       // Consultar OpenAI
+      this.log.log('Calling OpenAI service...');
       const gptResponse = await this.openAIService.create(prompt);
-
+      this.log.log(
+        `GPT response received. Length: ${gptResponse.length} characters`,
+      );
       this.log.debug('GPT Response:', gptResponse);
 
       // Salvar no histórico de conversas
+      this.log.log('Saving conversation to history...');
       const conversation = await this.conversationService.create(
         {
           mood,
@@ -56,13 +67,16 @@ export class GPTConsultationService {
         },
         firebaseUid,
       );
+      this.log.log(`Conversation saved with ID: ${conversation.id}`);
 
       // Verificar se existe plano na resposta
+      this.log.log('Extracting plan data from GPT response...');
       const planData = this.extractPlanFromResponse(gptResponse);
       this.log.debug('Extracted Plan Data:', planData);
       let createdPlan: Plan | null = null;
 
       if (planData) {
+        this.log.log('Plan data found. Creating plan...');
         const createPlanDto: CreatePlanDTO = {
           description: planData.description,
           duration: 7, // Duração padrão de 7 dias
@@ -73,23 +87,29 @@ export class GPTConsultationService {
           ),
         };
 
-        console.log('📝 DTO do plano:', createPlanDto);
+        this.log.debug('Plan DTO:', createPlanDto);
         createdPlan = await this.plannerService.createPlan(
           createPlanDto,
           firebaseUid,
         );
+        this.log.log(`Plan created successfully with ID: ${createdPlan.id}`);
       } else {
-        console.log('❌ Nenhum plano foi detectado na resposta do GPT');
+        this.log.log('No plan data detected in GPT response');
       }
 
+      // Buscar profile do usuário
+      this.log.log('Fetching user profile...');
       const profile: Profile = await this.profileRepository.findOneBy({
         firebaseUid,
       });
       if (!profile) {
-        throw new NotFoundException('Profile not foung!');
+        this.log.error(`Profile not found for Firebase UID: ${firebaseUid}`);
+        throw new NotFoundException('Profile not found!');
       }
+      this.log.log(`Profile found with ID: ${profile.id}`);
 
       // Emitir evento para conquista de busca por ajuda da IA
+      this.log.log('Emitting achievement event...');
       this.eventEmitter.emit('gpt.consultation.help', {
         profileId: profile.id,
         actionType: 'ai_help_seeking',
@@ -99,9 +119,14 @@ export class GPTConsultationService {
           planCreated: !!createdPlan,
         },
       });
+      this.log.log('Achievement event emitted successfully');
 
       // Limpar tags internas da resposta antes de retornar ao frontend
+      this.log.log('Cleaning internal tags from response...');
       const cleanedGptResponse = this.removeInternalTags(gptResponse);
+      this.log.log(
+        `Response cleaned. Final length: ${cleanedGptResponse.length} characters`,
+      );
 
       // Retornar resposta
       const response: GPTConsultationResponseDto = {
@@ -119,9 +144,15 @@ export class GPTConsultationService {
         };
       }
 
+      this.log.log('GPT consultation completed successfully');
       return response;
     } catch (error) {
-      this.log.error('Error in GPT consultation:', error);
+      this.log.error('Error in GPT consultation service:', error);
+      this.log.error(`Firebase UID: ${firebaseUid}`);
+      this.log.error(`Mood: ${mood}`);
+      this.log.error(`User message: ${userMessage}`);
+      this.log.error(`Error message: ${error.message}`);
+      this.log.error(`Error stack: ${error.stack}`);
       throw new Error('Erro ao consultar o GPT: ' + error.message);
     }
   }
@@ -177,25 +208,28 @@ Mensagem do usuário: ${userMessage}`,
   private extractPlanFromResponse(
     gptResponse: string,
   ): ExtractedPlanData | null {
-    console.log('🔍 Iniciando extração de plano da resposta...');
-    console.log('📄 Resposta do GPT para análise:', gptResponse);
+    this.log.debug('Starting plan extraction from GPT response...');
+    this.log.debug(`Response length: ${gptResponse.length} characters`);
 
     try {
       const planMatch = gptResponse.match(
         /<criarPlano>([\s\S]*?)<\/criarPlano>/,
       );
-      console.log('🎯 Regex match result:', planMatch);
+      this.log.debug(
+        'Plan regex match result:',
+        planMatch ? 'Found' : 'Not found',
+      );
 
       if (!planMatch) {
-        console.log('❌ Nenhum plano encontrado nas tags <criarPlano>');
+        this.log.debug('No plan found in <criarPlano> tags');
         return null;
       }
 
       const planJson = planMatch[1].trim();
-      console.log('📝 JSON extraído:', planJson);
+      this.log.debug(`Extracted JSON: ${planJson}`);
 
       const planData = JSON.parse(planJson);
-      console.log('📊 Dados do plano parseados:', planData);
+      this.log.debug('Parsed plan data:', planData);
 
       // Validar estrutura do plano
       if (
@@ -203,20 +237,25 @@ Mensagem do usuário: ${userMessage}`,
         !planData.description ||
         !Array.isArray(planData.steps)
       ) {
-        console.log('⚠️ Estrutura do plano inválida:', planData);
-        this.log.warn('Invalid plan structure:', planData);
+        this.log.warn('Invalid plan structure detected:', planData);
         return null;
       }
 
-      console.log('✅ Plano extraído com sucesso:', planData);
+      this.log.log('Plan extracted successfully');
+      this.log.debug('Plan details:', {
+        title: planData.title,
+        description: planData.description,
+        stepsCount: planData.steps.length,
+      });
+
       return {
         title: planData.title,
         description: planData.description,
         steps: planData.steps,
       };
     } catch (error) {
-      console.log('💥 Erro ao extrair plano:', error);
       this.log.error('Error extracting plan from response:', error);
+      this.log.error(`Error message: ${error.message}`);
       return null;
     }
   }
@@ -226,7 +265,10 @@ Mensagem do usuário: ${userMessage}`,
    * que não devem ser exibidas ao usuário final
    */
   private removeInternalTags(gptResponse: string): string {
-    console.log('🧹 Removendo tags internas da resposta do GPT...');
+    this.log.debug('Removing internal tags from GPT response...');
+    this.log.debug(
+      `Original response length: ${gptResponse.length} characters`,
+    );
 
     // Remove tags <criarPlano> e seu conteúdo
     let cleanedResponse = gptResponse.replace(
@@ -237,7 +279,11 @@ Mensagem do usuário: ${userMessage}`,
     // Remove quebras de linha extras que podem ter sobrado
     cleanedResponse = cleanedResponse.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
 
-    console.log('✅ Tags internas removidas com sucesso');
+    this.log.debug(
+      `Cleaned response length: ${cleanedResponse.length} characters`,
+    );
+    this.log.debug('Internal tags removed successfully');
+
     return cleanedResponse;
   }
 
@@ -245,18 +291,30 @@ Mensagem do usuário: ${userMessage}`,
     planId: string,
     firebaseUid: string,
   ): Promise<{ relatorio: string; reportId: string }> {
-    console.log('🎯 Gerando relatório motivacional para o plano:', planId);
+    this.log.log('=== Starting Motivational Report Generation ===');
+    this.log.log(`Plan ID: ${planId}`);
+    this.log.log(`Firebase UID: ${firebaseUid}`);
 
     try {
       // Buscar o plano com todas as informações necessárias
+      this.log.log('Fetching user plans...');
       const plano = await this.plannerService.findAllByProfile(firebaseUid);
       const planoEspecifico = plano.find((p) => p.id === planId);
 
       if (!planoEspecifico) {
+        this.log.error(`Plan not found or doesn't belong to user: ${planId}`);
         throw new Error('Plano não encontrado ou não pertence ao usuário');
       }
 
-      console.log('📊 Plano encontrado:', planoEspecifico);
+      this.log.log(`Plan found: ${planoEspecifico.description}`);
+      this.log.log(
+        `Plan progress: ${planoEspecifico.progress}/${planoEspecifico.duration} days`,
+      );
+      this.log.log(`Plan completed: ${planoEspecifico.completed}`);
+      this.log.log(`Goals count: ${planoEspecifico.goals?.length || 0}`);
+      this.log.log(
+        `Observations count: ${planoEspecifico.observations?.length || 0}`,
+      );
 
       // Preparar dados para o prompt
       const metasTexto = planoEspecifico.goals?.length
@@ -275,7 +333,10 @@ Mensagem do usuário: ${userMessage}`,
         (planoEspecifico.progress / planoEspecifico.duration) * 100,
       );
 
+      this.log.log(`Progress percentage: ${progressoPercentual}%`);
+
       // Construir prompt motivacional
+      this.log.log('Building motivational prompt...');
       const prompt = `
 Você é um coach motivacional especializado em recuperação e desenvolvimento pessoal. Com base no plano de recuperação do usuário e suas observações ao longo da jornada, escreva uma mensagem motivacional personalizada de aproximadamente 300-400 palavras.
 
@@ -301,25 +362,25 @@ ${observacoesTexto}
 Escreva uma mensagem motivacional que reflita especificamente sobre essa jornada e inspire o usuário a continuar crescendo.
 `.trim();
 
-      console.log('📝 Prompt gerado para relatório:', prompt);
+      this.log.debug(`Prompt length: ${prompt.length} characters`);
 
       // Consultar OpenAI para gerar o relatório
+      this.log.log('Calling OpenAI for motivational report generation...');
       const relatorioMotivacional = await this.openAIService.create(prompt);
-
-      console.log('✅ Relatório motivacional gerado com sucesso');
-      console.log(
-        '📄 Conteúdo do relatório:',
-        relatorioMotivacional.substring(0, 200) + '...',
+      this.log.log(
+        `Motivational report generated. Length: ${relatorioMotivacional.length} characters`,
       );
 
       // Salvar o relatório no banco de dados
+      this.log.log('Saving motivational report to database...');
       const savedReport = await this.plannerService.saveMotivationalReport(
         planId,
         relatorioMotivacional,
         firebaseUid,
       );
 
-      console.log('💾 Relatório salvo no banco de dados:', savedReport.id);
+      this.log.log(`Motivational report saved with ID: ${savedReport.id}`);
+      this.log.log('Motivational report generation completed successfully');
 
       return {
         relatorio: relatorioMotivacional,
@@ -327,6 +388,10 @@ Escreva uma mensagem motivacional que reflita especificamente sobre essa jornada
       };
     } catch (error) {
       this.log.error('Error generating motivational report:', error);
+      this.log.error(`Plan ID: ${planId}`);
+      this.log.error(`Firebase UID: ${firebaseUid}`);
+      this.log.error(`Error message: ${error.message}`);
+      this.log.error(`Error stack: ${error.stack}`);
       throw new Error('Erro ao gerar relatório motivacional: ' + error.message);
     }
   }

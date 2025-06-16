@@ -10,6 +10,7 @@ import { Profile } from '@modules/user/entities/profile.entity';
 import { CreateGoalDTO } from '../dtos/create-goal.dto';
 import { MotivationalReportResponseDto } from '../dtos/motivational-report-response.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { PlanProgressEvent } from '@modules/achievements/events/user-action.event';
 
 @Injectable()
 export class PlannerService {
@@ -90,21 +91,17 @@ export class PlannerService {
     await this.planRepository.save(plan);
 
     // Emitir evento de progresso
-    this.eventEmitter.emit('plan.progress.updated', {
-      profileId: plan.profile.id,
-      planId: plan.id,
-      progressType: 'increase',
-      currentProgress: plan.progress,
-      duration: plan.duration,
-    });
+    this.eventEmitter.emit(
+      'plan.progress.updated',
+      new PlanProgressEvent(plan.profile.id, plan.id, 'increase'),
+    );
 
     // Emitir evento de conclusão se acabou de ser completado
     if (!wasCompleted && plan.completed) {
-      this.eventEmitter.emit('plan.completed', {
-        profileId: plan.profile.id,
-        planId: plan.id,
-        duration: plan.duration,
-      });
+      this.eventEmitter.emit(
+        'plan.completed',
+        new PlanProgressEvent(plan.profile.id, plan.id, 'completion'),
+      );
     }
 
     // Criar observação se o texto foi fornecido

@@ -8,6 +8,10 @@ import {
   ReplyCreatedEvent,
   FriendRequestAcceptedEvent,
 } from '@modules/notification/events/notification.events';
+import {
+  DiaryEntryCreatedEvent,
+  PlanProgressEvent,
+} from '../events/user-action.event';
 
 @Injectable()
 export class SystemEventsListener {
@@ -95,10 +99,10 @@ export class SystemEventsListener {
 
   // Capturar eventos de progresso do planner
   @OnEvent('plan.progress.updated')
-  async handlePlanProgressUpdated(event: any): Promise<void> {
+  async handlePlanProgressUpdated(event: PlanProgressEvent): Promise<void> {
     this.logger.debug(`Plan progress updated for user ${event.profileId}`);
 
-    if (event.progressType === 'increase') {
+    if (event.data.progressType === 'increase') {
       await this.achievementsService.updateProgress(
         event.profileId,
         AchievementType.CONSECUTIVE_PRACTICES,
@@ -109,25 +113,27 @@ export class SystemEventsListener {
 
   // Capturar eventos de conclusão de plano
   @OnEvent('plan.completed')
-  async handlePlanCompleted(event: any): Promise<void> {
+  async handlePlanCompleted(event: PlanProgressEvent): Promise<void> {
     this.logger.debug(`Plan completed by user ${event.profileId}`);
 
-    await this.achievementsService.updateProgress(
-      event.profileId,
-      AchievementType.PLAN_COMPLETION,
-      1,
-    );
+    if (event.data.progressType === 'completion') {
+      await this.achievementsService.updateProgress(
+        event.profileId,
+        AchievementType.PLAN_COMPLETION,
+        1,
+      );
 
-    await this.achievementsService.updateProgress(
-      event.profileId,
-      AchievementType.AI_PLAN_COMPLETION,
-      1,
-    );
+      await this.achievementsService.updateProgress(
+        event.profileId,
+        AchievementType.AI_PLAN_COMPLETION,
+        1,
+      );
+    }
   }
 
   // Capturar eventos de criação de entrada do diário
   @OnEvent('diary.entry.created')
-  async handleDiaryEntryCreated(event: any): Promise<void> {
+  async handleDiaryEntryCreated(event: DiaryEntryCreatedEvent): Promise<void> {
     this.logger.debug(`Diary entry created by user ${event.profileId}`);
 
     // Incrementar progresso para entradas do diário
@@ -138,7 +144,7 @@ export class SystemEventsListener {
     );
 
     // Verificar se é uma reflexão profunda
-    if (event.hasReflection) {
+    if (event.data.hasReflection) {
       this.logger.debug(`Deep reflection created by user ${event.profileId}`);
       await this.achievementsService.updateProgress(
         event.profileId,

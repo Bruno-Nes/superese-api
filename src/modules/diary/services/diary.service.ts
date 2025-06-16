@@ -14,6 +14,7 @@ import { CreateFolderDto } from '../dtos/create-folder.dto';
 import { UpdateFolderDto } from '../dtos/update-folder.dto';
 import { Profile } from '@modules/user/entities/profile.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DiaryEntryCreatedEvent } from '@modules/achievements/events/user-action.event';
 
 @Injectable()
 export class DiaryService {
@@ -131,14 +132,15 @@ export class DiaryService {
       createDiaryDto.content &&
       createDiaryDto.content.length >= 100;
 
-    // Emitir evento de criação de entrada do diário
-    this.eventEmitter.emit('diary.entry.created', {
-      profileId: folder.profile.id,
-      entryId: savedDiary.id,
-      hasReflection,
-      title: createDiaryDto.title,
-      contentLength: createDiaryDto.content?.length || 0,
-    });
+    // Emitir evento de criação de entrada do diário usando a classe de evento
+    this.eventEmitter.emit(
+      'diary.entry.created',
+      new DiaryEntryCreatedEvent(
+        folder.profile.id,
+        savedDiary.id,
+        hasReflection,
+      ),
+    );
 
     return savedDiary;
   }
