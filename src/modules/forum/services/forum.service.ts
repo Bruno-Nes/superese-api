@@ -201,6 +201,7 @@ export class ForumService {
           profile: {
             id: comment.profile.id,
             username: comment.profile.username,
+            avatar: comment.profile.avatar,
           },
           replies: replies,
         };
@@ -230,6 +231,7 @@ export class ForumService {
           profile: {
             id: reply.profile.id,
             username: reply.profile.username,
+            avatar: reply.profile.avatar,
           },
           replies: subReplies,
         };
