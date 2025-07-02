@@ -11,7 +11,7 @@ export class OpenAIService {
   async create(prompt: string): Promise<string> {
     try {
       const completion = await this.api.chat.completions.create({
-        model: 'gpt-4.1',
+        model: 'gpt-3.5-turbo',
         store: true,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
