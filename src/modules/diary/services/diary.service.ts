@@ -83,7 +83,7 @@ export class DiaryService {
     return this.folderRepository.save(folder);
   }
 
-  async removeFolder(id: string, firebaseUid: string): Promise<void> {
+  async removeFolder(id: string, firebaseUid: string): Promise<Folder> {
     const profile: Profile =
       await this.userService.findUserByFirebaseUid(firebaseUid);
     const folder = await this.folderRepository.findOne({
@@ -102,7 +102,7 @@ export class DiaryService {
     }
 
     await this.diaryRepository.delete({ folder: { id } });
-    await this.folderRepository.remove(folder);
+    return await this.folderRepository.remove(folder);
   }
 
   async createDiary(

@@ -52,7 +52,8 @@ export class FolderController {
     @Param('id') id: string,
     @Body() updateFolderDto: UpdateFolderDto,
   ) {
-    return this.diaryService.updateFolder(id, req.user.id, updateFolderDto);
+    const firebaseUserId = req.user.uid;
+    return this.diaryService.updateFolder(id, firebaseUserId, updateFolderDto);
   }
 
   @Delete(':id')
